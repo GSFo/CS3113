@@ -1,0 +1,2 @@
+E:\C++ project\SDLProject\Debug\SDLProject.exe
+E:\C++ project\SDLProject\Debug\SDLProject.pdb

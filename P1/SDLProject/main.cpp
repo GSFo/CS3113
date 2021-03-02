@@ -300,19 +300,20 @@ void Unit::loadTexture(const char* filePath) {
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
 	stbi_image_free(image);
+	/*
 	std::stringstream os;
 	os << textureID;
 	std::string intString = os.str();
 	MessageBox(0, (LPCTSTR)intString.c_str(), "", MB_OK);
+	*/
 }
 
 
 
 void Initialize() {
 	SDL_Init(SDL_INIT_VIDEO);
-	__displayWindow = SDL_CreateWindow("PROFESSOR CHASED BY HAUNTER!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_OPENGL);
+	__displayWindow = SDL_CreateWindow("PROFESSOR FIGHTING BACK TO HAUNTERS!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_OPENGL);
 	SDL_GLContext context = SDL_GL_CreateContext(__displayWindow);
 	SDL_GL_MakeCurrent(__displayWindow, context);
 

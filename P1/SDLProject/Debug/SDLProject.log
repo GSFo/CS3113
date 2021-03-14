@@ -1,1 +1,6 @@
-﻿  SDLProject.vcxproj -> E:\C++ project\CS3113\CS3113\P1\SDLProject\Debug\SDLProject.exe
+﻿  main.cpp
+E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(244,36): warning C4244: 'argument': conversion from 'GLuint' to 'float', possible loss of data
+E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(246,23): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(246,17): warning C4244: 'argument': conversion from 'GLuint' to 'float', possible loss of data
+E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(317,20): warning C4018: '<': signed/unsigned mismatch
+  SDLProject.vcxproj -> E:\C++ project\CS3113\CS3113\P1\SDLProject\Debug\SDLProject.exe

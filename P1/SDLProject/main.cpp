@@ -1,4 +1,4 @@
-#define GL_SILENCE_DEPRECATION
+﻿#define GL_SILENCE_DEPRECATION
 
 #ifdef _WINDOWS
 #include <GL/glew.h>
@@ -37,13 +37,15 @@ float __ticks;
 float __lastTicks;
 
 class Unit;
+class Player;
 class Block;
+class BuffSkill;
 
 enum class GameState { GAME, WIN, LOSE };
 
 class GameStatus {
 public:
-	Unit* player;
+	Player* player;
 	float* modelUnitVertices;
 	float* unitVertices;
 	float* unitTexCoords;
@@ -54,6 +56,7 @@ public:
 	std::hash_map<std::string, GLuint> textureIDs;
 	void loadTexture(std::string& name, const char* filename);
 	float gravity;
+	float friction;
 	//p2 code. Unit* playerB;//players are not in a list, since each player would require one control method
 	std::vector<Unit*> NPCList;//maybe the size of this should be set before the game in the future
 	std::vector<Block*> blockList;
@@ -71,7 +74,7 @@ public:
 	void updateNPC();
 	void renderNPC();
 	void buildPlatform();
-	void buildBlocks();
+	void buildNPC2();
 };
 
 void GameStatus::loadTexture(std::string& name, const char* filePath){
@@ -94,6 +97,78 @@ void GameStatus::loadTexture(std::string& name, const char* filePath){
 
 
 GameStatus __states;
+
+
+class Buff {
+private:
+	float timer;
+	std::string name;
+public:
+	Buff(float time, std::string name) :timer(time),name(name){};
+	void update();
+	void gain(float duration);
+	const std::string& getName() const {return name;};
+	bool inEffect() const { return timer != 0; };
+};
+
+void Buff::update() {
+	if (timer > 0) {
+		timer -= __deltaTime;
+		if (timer < 0) {
+			timer = 0;
+		}
+	}
+}
+
+void Buff::gain(float duration) {
+	timer = duration;
+}
+
+class coldDown :public Buff {
+private:
+	float cd;
+public:
+	coldDown(float cd) :Buff(0, "coldDown"), cd(cd) {};
+	void reset() { Buff::gain(cd); };
+	bool onColdDown() const { return inEffect(); };
+};
+
+class Skill{
+private:
+	coldDown cd;
+public:
+	Skill(float cd):cd(cd) {};
+	void update() { cd.update(); };
+	virtual int activate(){ 
+		if (cd.onColdDown()) {
+			return -1;//activation failed due to colddown
+		}
+		else {
+			cd.reset();
+		}
+	};
+};
+
+class BuffSkill :public Skill {
+private:
+	Buff buff;
+	float buffDuration;
+public:
+	BuffSkill(float coldDown, float buffDuration, std::string buffName) :Skill(coldDown), buff(0, buffName), buffDuration(buffDuration) {};
+
+	int activate() {
+		if (Skill::activate() == -1) {
+			return -1;
+		}
+		buff.gain(buffDuration);
+		return 0;//successfully activated
+	}
+	bool inEffect() const {
+		return buff.inEffect();
+	}
+	void update() { Skill::update(); buff.update(); }
+	const std::string& getSkillName() const { return buff.getName(); };
+};
 
 class Location {
 private:
@@ -157,7 +232,7 @@ public:
 void Velocity::accel(float x, float y, float z) {
 	v += glm::vec3(x, y, z);
 }
-
+enum class UnitType{Player,Magniton,Gasty,Haunter,NA};
 class Unit {
 private:
 	Status* status;
@@ -167,20 +242,29 @@ private:
 	bool repeat=false;
 	bool boarderFlagX = false;
 	bool boarderFlagY = false;
+	bool onland = false;
+	
+
+	
 
 protected:
 	bool collisionFlag = false;
+	UnitType type;
+	bool dead = false;
 
 
 public:
 	glm::vec3 size;//probably gonna make a class for this later
 	//Unit() {};
 	Unit(float speed, float x, float y, float r);
+	virtual void update() = 0 {};
 	void setTexture(const char*,bool repeat=false);
 	void moveLeft() { v->accel(-status->getSpeed() * __deltaTime, 0, 0); }
 	void moveRight() { v->accel(status->getSpeed() * __deltaTime, 0, 0); }
 	void moveUp() { v->accel(0, status->getSpeed() * __deltaTime, 0); }
 	void moveDown() { v->accel(0, -status->getSpeed() * __deltaTime, 0); }
+	void jump();
+	void land();
 	void accel(float x, float y, float z);
 	void accelR(float r) {
 		v->accelR(r); if (v->getVr() > 80) { __states.__GAMEOVER__(); }
@@ -188,9 +272,9 @@ public:
 	void bounceX();
 	void bounceY();
 	void move();//move with velocity
-	void render() const;
+	virtual void render() const;
 	bool checkCollisionBox(Unit* other);
-	void processCollision(Unit* other);
+	virtual void processCollision(Unit* other);
 	float getDistance(Unit* other) const {
 		return std::sqrt(std::pow(location->getX() - other->location->getX(), 2) + std::pow(location->getY() - other->location->getY(), 2));
 	}
@@ -223,9 +307,39 @@ public:
 		return boarderFlagX || boarderFlagY;
 	}
 	void setMatrix(float* m, float*,float*, float* model) const;
+	void die();
+	UnitType getType() const { return type; };
+	const glm::vec3& getV() const{ return v->getV(); }
+	bool isAlive() const { return !dead; }
+	bool landed() const { return onland; }
 };
 
 enum class BlockType { Deadly, Bouncy, Platform };
+
+
+
+class Player :public Unit {
+private:
+	BuffSkill powerShield;
+	bool boosted=false;
+public:
+	Player(float speed, float x, float y, float r) :Unit(speed, x, y, r), powerShield(15, 10, "power shield") { Unit::type = UnitType::Player; };
+	void update() {
+		powerShield.update();
+		if (powerShield.inEffect()) {
+			if (!boosted) { boosted = true; size.x *= 1.6; }
+		}
+		else {
+			if (boosted) { boosted = false; size.x /= 1.6; }
+		}
+	};
+	void activateSkill() {
+		powerShield.activate();
+	}
+	bool isBoosted() const {
+		return boosted;
+	}
+};
 
 class Block :public Unit {
 private:
@@ -234,14 +348,133 @@ public:
 	Block(BlockType type, float x, float y, float r);
 	const BlockType getType();
 	void processCollision(Unit* other);
+	void update() { if (dead) return; processCollision(__states.player); };
+};
+
+class Magniton :public Block {
+private:
+	Skill flee;
+public:
+	Magniton(float x, float y, float r) :Block(BlockType::Bouncy,x,y,r),flee(5.0) {};
+	void update();
+};
+
+void Magniton::update() {
+	if (getDistance(__states.player) < 2&&__states.player->isBoosted()) {
+		if (flee.activate() !=-1) {
+			accel(__states.player->getV().x*.3, __states.player->getV().y*.3,0);
+		}
+	}
+
+	if (onBoarder()) {die();}
+	Unit::move();
+	Block::update();
+}
+
+class Gasty :public Block {
+private:
+	BuffSkill voidForm;
+public:
+	void update();
+	Gasty(float x, float y, float z) :Block(BlockType::Deadly, x, y, z), voidForm(10.0, 3.0, "void form") { Unit::type = UnitType::Gasty; };
+	void processCollision(Player* other);
+	void render() const;
 
 };
+
+void Gasty::render() const{
+	if (!voidForm.inEffect()) {
+		Unit::render();
+	}
+}
+
+void Gasty::update() {
+	if (dead) {
+		return;
+	}
+	voidForm.update();
+	if (getDistance(__states.player)<2) {
+		voidForm.activate();
+
+	}
+	processCollision(__states.player);
+
+}
+
+void Gasty::processCollision(Player* other) {
+	if (!voidForm.inEffect()) {
+		if (!collisionFlag) {
+			if (checkCollisionBox(other)) {
+
+				if (other->isBoosted()) {
+					die();
+					return;
+				}
+				__states.__GAMEOVER__();
+				bounceX();
+				collisionFlag = true;
+			}
+		}
+		else {
+			if (!checkCollisionBox(other)) {
+				collisionFlag = false;
+			}
+		}
+	}
+
+}
+
+
+
+
+class Haunter:public Unit {
+public:
+	Haunter(float speed, float x, float y, float r) :Unit(speed, x, y, r) { Unit::type = UnitType::Haunter; };
+	void update();
+	void processCollision(Player* other);
+};
+
+void Haunter::processCollision(Player* other) {
+		if (!collisionFlag) {
+			if (checkCollisionBox(other)) {
+				if (other->isBoosted()) {
+					die();
+					return;
+				}
+				__states.__GAMEOVER__();
+				bounceX();
+				collisionFlag = true;
+			}
+		}
+		else {
+			if (!checkCollisionBox(other)) {
+				collisionFlag = false;
+			}
+		}
+}
+
+void Haunter::update() {
+	if (dead) return;
+	move();
+	processCollision(__states.player);
+	//NPC->processCollision(playerB);
+	//check collision circular
+	/*not for this task
+	if (NPC->getDistance(player) < 1) {
+		player->bounceX();
+		player->bounceY();
+		player->accelR(5);
+		//__states.__GAMEOVER__();
+	}*/
+	//check boarder
+	onBoarder();
+}
 
 
 
 void GameStatus::spawnNPC(GLuint num) {
 	for (GLuint i = 0; i < num; ++i) {
-		Unit* newNPC = new Unit(4, -4, 2 * i, 0);//need some other way to get the spawn location
+		Unit* newNPC = new Haunter(4, -4, 2 * i, 0);//need some other way to get the spawn location
 		newNPC->setTexture("Haunter");//need NPC image list in future 
 		newNPC->accel(i, pow(-1, i), 0);//speed
 		NPCList.push_back(newNPC);
@@ -250,22 +483,10 @@ void GameStatus::spawnNPC(GLuint num) {
 
 void GameStatus::updateNPC() {
 	for (Unit* NPC : NPCList) {
-		NPC->move();
-		NPC->processCollision(player);
-		//NPC->processCollision(playerB);
-		//check collision circular
-		/*not for this task
-		if (NPC->getDistance(player) < 1) {
-			player->bounceX();
-			player->bounceY();
-			player->accelR(5);
-			//__states.__GAMEOVER__();
-		}*/
-		//check boarder
-		NPC->onBoarder();
+		NPC->update();
 	}
 	for (Block* block : blockList) {
-		block->processCollision(player);
+		block->update();
 	}
 }
 
@@ -287,19 +508,19 @@ void GameStatus::buildPlatform() {
 }
 
 
-void GameStatus::buildBlocks() {
+void GameStatus::buildNPC2() {
 	bool isDeadly = false;
-	for (float x = -9.5; x < 10; x += 4) {
+	for (float x = -8; x < 10; x += 7) {
 		if (isDeadly) {
-			Block* newBlock = new Block(BlockType::Deadly, x, 0, 0);
+			Block* newBlock = new Gasty(x, 0, 0);
 			newBlock->setTexture("Gasty");//need NPC image list in future 
-			blockList.push_back(newBlock);
+			NPCList.push_back(newBlock);
 		}
 
 		else {
-			Block* newBlock = new Block(BlockType::Bouncy, x, 0, 0);
+			Block* newBlock = new Magniton(x, 0, 0);
 			newBlock->setTexture("Magnimon");//need NPC image list in future 
-			blockList.push_back(newBlock);
+			NPCList.push_back(newBlock);
 		}
 
 		isDeadly = !isDeadly;
@@ -362,6 +583,7 @@ Unit::Unit(float speed, float x, float y, float r) {
 	v = new Velocity();
 	textureID = -1;
 	size = glm::vec3(1, 1, 1);
+	type = UnitType::NA;
 };
 
 void Unit::accel(float x, float y, float z) {
@@ -438,6 +660,21 @@ void Unit::setMatrix (float* toSetV, float* toSetT, float* modelV, float*modelT)
 	}
 
 }
+
+void Unit::die() { dead = true; }
+
+void Unit::land() {
+	v->accel(0,-v->getV().y,0);
+	onland = true;
+}
+
+void Unit::jump() {
+	if (onland) {
+		v->accel(0, -3 * __states.gravity, 0);
+	}
+	onland = false;
+}
+
 void Unit::render() const {
 	/*
 	std::stringstream os;
@@ -445,6 +682,9 @@ void Unit::render() const {
 	std::string intString = os.str();
 	MessageBox(0, (LPCTSTR)intString.c_str(), "", MB_OK);
 	*/
+	if (dead) {
+		return;
+	}
 	if (textureID == -1) {
 		assert(false);
 	}
@@ -458,7 +698,6 @@ void Unit::render() const {
 	__program.SetModelMatrix(__modelMatrix);
 
 	if (repeat) {
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	}
 	glBindTexture(GL_TEXTURE_2D, textureID);
@@ -514,7 +753,8 @@ void Block::processCollision(Unit* other) {
 
 	case BlockType::Platform:
 		if (checkCollisionBox(other)) {
-			__states.__GAMEWIN__();
+			//__states.__GAMEWIN__();
+			other->land();
 		}
 		return;
 	}
@@ -524,7 +764,7 @@ void Block::processCollision(Unit* other) {
 
 void Initialize() {
 	SDL_Init(SDL_INIT_VIDEO);
-	__displayWindow = SDL_CreateWindow("PROFESSOR ESCAPE FROM THE HAUNTERS!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_OPENGL);
+	__displayWindow = SDL_CreateWindow("TIME TO FIGHT BACK!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_OPENGL);
 	SDL_GLContext context = SDL_GL_CreateContext(__displayWindow);
 	SDL_GL_MakeCurrent(__displayWindow, context);
 
@@ -545,6 +785,7 @@ void Initialize() {
 	glUseProgram(__program.programID);
 
 	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+	
 
 	//load textures
 	std::string a("Gasty");
@@ -565,10 +806,11 @@ void Initialize() {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	//set gravity
-	__states.gravity = -.5;
+	__states.gravity = -2;
+	__states.friction = -1.5;
 	//intialize units and set attributes
 	//player
-	__states.player = new Unit(3, 0, 7.0, 0);
+	__states.player = new Player(3, 0, 7.0, 0);
 	__states.player->setTexture("ctg");
 	__states.player->size = glm::vec3(1, 2, 1);
 	/*__states.playerB = new Unit(4, 9.5, 0, 0);
@@ -581,7 +823,7 @@ void Initialize() {
 
 	//Blocks
 	__states.buildPlatform();
-	__states.buildBlocks();
+	__states.buildNPC2();
 	__states.unitVertices = new float[12] { -.5, -.5, .5, -.5, .5, .5, -.5, -.5, .5, .5, -.5, 0.5 };
 	__states.modelUnitVertices = new float[12]{ -.5, -.5, .5, -.5, .5, .5, -.5, -.5, .5, .5, -.5, 0.5 };
 	__states.unitTexCoords = new float[12] { 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0 };
@@ -628,6 +870,12 @@ void ProcessInput() {
 		if (__keys[SDL_SCANCODE_D]) {
 			__states.player->moveRight();
 		}
+		if (__keys[SDL_SCANCODE_SPACE]) {
+			__states.player->jump();
+		}
+		if (__keys[SDL_SCANCODE_E]) {
+			__states.player->activateSkill();
+		}
 	}
 	//*/
 
@@ -641,9 +889,32 @@ void ProcessInput() {
 	}*/
 
 }
+
+int sign(int a) {
+	if (a > 0) return 1;
+	if (a < 0) return -1;
+	return 0;
+}
+
 void Update() {
+	//check if win
+	bool winFlag = true;
+	for (Unit* unit : __states.NPCList) {
+		if (unit->isAlive()) {
+			winFlag = false;
+		}
+	}
+	if (winFlag) {
+		__states.__GAMEWIN__();
+	}
 	__states.player->move();
 	__states.player->accel(0, __states.gravity*__deltaTime, 0);
+	if (__states.player->landed()) {
+		__states.player->accel( sign(__states.player->getV().x)*__states.friction* __deltaTime,0, 0);
+
+	}
+
+	__states.player->update();
 	//__states.playerB->move();
 	__states.updateNPC();
 	if (__states.player->onBoarder()) {
@@ -674,7 +945,9 @@ void Render() {
 		__states.DrawTextGL(&__program, __states.textureIDs["font1"], "MISSION FAILED", 1.3f, -.3f, glm::vec3(-8, 4, 0));
 	}
 	if (__states.state == GameState::GAME) {
-		__states.DrawTextGL(&__program, __states.textureIDs["font1"], "DONT TOUCH THE GHOST TYPE POKEMON!", .8f, -.3f, glm::vec3(-8, 4, 0));
+		__states.DrawTextGL(&__program, __states.textureIDs["font1"], "TIME TO FIGHT BACK!", .8f, -.3f, glm::vec3(-8, 4, 0));
+		__states.DrawTextGL(&__program, __states.textureIDs["font1"], "Press Space To Jump, Press E to activate POWER MODE to destroy the ghosts!",.5f, -.3f, glm::vec3(-8, 2, 0));
+
 	}
 
 	glDisableVertexAttribArray(__program.positionAttribute);

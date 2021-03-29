@@ -2,4 +2,11 @@ You are not supposed to touch the ghost type Pokémon, Gasty and Haunter. Yet, 
 
 Note the ghosts are ghosts so they can go through entities. (well just don't wanna make collision detections between them :p)
 
-You have a bunch of Squirtle at your destination. Your goal is to reach to Squirtle so that they can help you block the ghosts.  
+You have a bunch of Squirtles to hold your back. You can safely land or jump on them.   
+
+Press E to activate power mode, Duration 10s, Cold down 15s. You destroy every creature you touch when power mode is on.
+
+Magnetons try to escape from you when you approach them with power mode on; Gasties hides in the void when you approach them with power mode on and return after several seconds.
+Haunters do paralleling.
+
+Your goal is to eliminate everything on the screen.

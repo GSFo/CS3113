@@ -1,25 +1,20 @@
 ﻿  main.cpp
-E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(330,1): warning C4305: '*=': truncation from 'double' to 'T'
+E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(353,1): warning C4305: '*=': truncation from 'double' to 'T'
           with
           [
               T=float
           ]
-E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(333,1): warning C4305: '/=': truncation from 'double' to 'T'
+E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(356,1): warning C4305: '/=': truncation from 'double' to 'T'
           with
           [
               T=float
           ]
-E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(365,65): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(365,35): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(477,39): warning C4244: 'argument': conversion from 'GLuint' to 'float', possible loss of data
-E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(479,23): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(479,17): warning C4244: 'argument': conversion from 'GLuint' to 'float', possible loss of data
-E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(538,20): warning C4018: '<': signed/unsigned mismatch
-E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(913,55): warning C4244: 'argument': conversion from 'const T' to 'int', possible loss of data
-          with
-          [
-              T=float
-          ]
-E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(312): warning C4172: returning address of local variable or temporary
-E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(149): warning C4715: 'Skill::activate': not all control paths return a value
+E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(388,65): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(388,35): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(501,39): warning C4244: 'argument': conversion from 'GLuint' to 'float', possible loss of data
+E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(503,23): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(503,17): warning C4244: 'argument': conversion from 'GLuint' to 'float', possible loss of data
+E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(562,20): warning C4018: '<': signed/unsigned mismatch
+E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(323): warning C4172: returning address of local variable or temporary
+E:\C++ project\CS3113\CS3113\P1\SDLProject\main.cpp(156): warning C4715: 'Skill::activate': not all control paths return a value
   SDLProject.vcxproj -> E:\C++ project\CS3113\CS3113\P1\SDLProject\Debug\SDLProject.exe

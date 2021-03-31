@@ -41,6 +41,13 @@ class Player;
 class Block;
 class BuffSkill;
 
+int sign(float a) {
+	if (a > 0) return 1;
+	if (a < 0) return -1;
+	return 0;
+}
+
+
 enum class GameState { GAME, WIN, LOSE };
 
 class GameStatus {
@@ -55,8 +62,8 @@ public:
 
 	std::hash_map<std::string, GLuint> textureIDs;
 	void loadTexture(std::string& name, const char* filename);
-	float gravity;
-	float friction;
+	float gravity=-2;
+	float friction=-1.5;
 	//p2 code. Unit* playerB;//players are not in a list, since each player would require one control method
 	std::vector<Unit*> NPCList;//maybe the size of this should be set before the game in the future
 	std::vector<Block*> blockList;
@@ -224,10 +231,14 @@ public:
 	Velocity() {};
 	void accel(float x, float y, float z);
 	void accelR(float r) { vr += r; };
+	void reset();
 	glm::vec3 getV() const { return v; };
 	float getVr() const { return vr; }
 };
 
+void Velocity::reset() {
+	v = glm::vec3(0.0f, 0.0f, 0.0f);
+}
 
 void Velocity::accel(float x, float y, float z) {
 	v += glm::vec3(x, y, z);
@@ -325,6 +336,18 @@ private:
 public:
 	Player(float speed, float x, float y, float r) :Unit(speed, x, y, r), powerShield(15, 10, "power shield") { Unit::type = UnitType::Player; };
 	void update() {
+		accel(0, __states.gravity * __deltaTime, 0);
+		if (landed()) {
+			if (abs(getV().x) > abs(__states.friction * __deltaTime)) {
+				accel(sign(getV().x) * __states.friction * __deltaTime, 0, 0);
+			}
+			else {
+				accel(-getV().x, 0, 0);
+			}
+		}
+
+		move();
+
 		powerShield.update();
 		if (powerShield.inEffect()) {
 			if (!boosted) { boosted = true; size.x *= 1.6; }
@@ -394,8 +417,9 @@ void Gasty::update() {
 	}
 	voidForm.update();
 	if (getDistance(__states.player)<2) {
-		voidForm.activate();
-
+		if (__states.player->isBoosted()) {
+			voidForm.activate();
+		}
 	}
 	processCollision(__states.player);
 
@@ -806,8 +830,6 @@ void Initialize() {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	//set gravity
-	__states.gravity = -2;
-	__states.friction = -1.5;
 	//intialize units and set attributes
 	//player
 	__states.player = new Player(3, 0, 7.0, 0);
@@ -890,12 +912,6 @@ void ProcessInput() {
 
 }
 
-int sign(int a) {
-	if (a > 0) return 1;
-	if (a < 0) return -1;
-	return 0;
-}
-
 void Update() {
 	//check if win
 	bool winFlag = true;
@@ -907,12 +923,7 @@ void Update() {
 	if (winFlag) {
 		__states.__GAMEWIN__();
 	}
-	__states.player->move();
-	__states.player->accel(0, __states.gravity*__deltaTime, 0);
-	if (__states.player->landed()) {
-		__states.player->accel( sign(__states.player->getV().x)*__states.friction* __deltaTime,0, 0);
-
-	}
+	
 
 	__states.player->update();
 	//__states.playerB->move();

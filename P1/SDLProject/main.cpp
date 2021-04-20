@@ -1,857 +1,44 @@
 ﻿#define GL_SILENCE_DEPRECATION
 
-#ifdef _WINDOWS
-#include <GL/glew.h>
-#endif
 
 
 #define GL_GLEXT_PROTOTYPES 1
-#include <SDL.h>
-#include <SDL_opengl.h>
-#include "glm/mat4x4.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-#include "ShaderProgram.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-#include "windows.h"
+#include "Entity.h"
+#include "Map.h"
 #include <iomanip>
 #include <vector>
 #include<queue>
-
-#define _SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS
-#include<hash_map>
-#include<string>
-
-SDL_Window* __displayWindow;
-bool gameIsRunning = true;
-ShaderProgram __program;
-glm::mat4 __viewMatrix, __modelMatrix, __projectionMatrix;
-
-
-float __boardSizeX = 10;
-float __boardSizeY = 8;
-const Uint8* __keys = SDL_GetKeyboardState(NULL);
-
+#include "Level1.h"
+#include "Level2.h"
+#include "Level3.h"
+#include "Level0.h"
+#include <SDL_Mixer.h>
 float __deltaTime;
 float __ticks;
 float __lastTicks;
 
-class Unit;
-class Player;
-class Block;
-class BuffSkill;
+bool gameIsRunning = true;
 
-int sign(float a) {
-	if (a > 0) return 1;
-	if (a < 0) return -1;
-	return 0;
-}
+
+const Uint8* __keys = SDL_GetKeyboardState(NULL);
+
 
 
 enum class GameState { GAME, WIN, LOSE };
 
-class GameStatus {
-public:
-	Player* player;
-	float* modelUnitVertices;
-	float* unitVertices;
-	float* unitTexCoords;
-	float* modelTexCoords;
-	GameState state;
-	void DrawTextGL(ShaderProgram* program, GLuint fontTextureID, std::string text, float size, float spacing, glm::vec3 position);
 
-	std::hash_map<std::string, GLuint> textureIDs;
-	void loadTexture(std::string& name, const char* filename);
-	float gravity=-2;
-	float friction=-1.5;
-	//p2 code. Unit* playerB;//players are not in a list, since each player would require one control method
-	std::vector<Unit*> NPCList;//maybe the size of this should be set before the game in the future
-	std::vector<Block*> blockList;
-	std::queue<GLuint> deadNPCQueue;//maybe some NPC will die in the future; keep this queue to get the first available slot
-	void __GAMEOVER__() {
-		state = GameState::LOSE;
-		//gameIsRunning = false;
-		//SDL_Quit();
-	};
 
-	void __GAMEWIN__() {
-		state = GameState::WIN;
-	};
-	void spawnNPC(GLuint num);
-	void updateNPC();
-	void renderNPC();
-	void buildPlatform();
-	void buildNPC2();
-};
-
-void GameStatus::loadTexture(std::string& name, const char* filePath){
-	int w, h, n;
-	unsigned char* image = stbi_load(filePath, &w, &h, &n, STBI_rgb_alpha);
-
-	if (image == NULL) {
-		std::cout << "Unable to load image. Make sure the path is correct\n";
-		assert(false);
-	}
-	GLuint textureID;
-	glGenTextures(1, &textureID);
-	glBindTexture(GL_TEXTURE_2D, textureID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	stbi_image_free(image);
-	textureIDs[name] = textureID;
-}
-
-
-GameStatus __states;
-
-
-class Buff {
-private:
-	float timer;
-	std::string name;
-public:
-	Buff(float time, std::string name) :timer(time),name(name){};
-	void update();
-	void gain(float duration);
-	const std::string& getName() const {return name;};
-	bool inEffect() const { return timer != 0; };
-};
-
-void Buff::update() {
-	if (timer > 0) {
-		timer -= __deltaTime;
-		if (timer < 0) {
-			timer = 0;
-		}
-	}
-}
-
-void Buff::gain(float duration) {
-	timer = duration;
-}
-
-class coldDown :public Buff {
-private:
-	float cd;
-public:
-	coldDown(float cd) :Buff(0, "coldDown"), cd(cd) {};
-	void reset() { Buff::gain(cd); };
-	bool onColdDown() const { return inEffect(); };
-};
-
-class Skill{
-private:
-	coldDown cd;
-public:
-	Skill(float cd):cd(cd) {};
-	void update() { cd.update(); };
-	virtual int activate(){ 
-		if (cd.onColdDown()) {
-			return -1;//activation failed due to colddown
-		}
-		else {
-			cd.reset();
-		}
-	};
-};
-
-class BuffSkill :public Skill {
-private:
-	Buff buff;
-	float buffDuration;
-public:
-	BuffSkill(float coldDown, float buffDuration, std::string buffName) :Skill(coldDown), buff(0, buffName), buffDuration(buffDuration) {};
-
-	int activate() {
-		if (Skill::activate() == -1) {
-			return -1;
-		}
-		buff.gain(buffDuration);
-		return 0;//successfully activated
-	}
-	bool inEffect() const {
-		return buff.inEffect();
-	}
-	void update() { Skill::update(); buff.update(); }
-	const std::string& getSkillName() const { return buff.getName(); };
-};
-
-class Location {
-private:
-	glm::vec3 location;
-	float r;
-public:
-	Location(float x, float y, float r);
-	float getR() const;
-	void spin(const float r);
-	float getX() const;
-	float getY() const;
-	glm::vec3 getLocation() const {
-		return location;
-	}
-	void move(glm::vec3);
-};
-
-Location::Location(float x, float y, float r) {
-	this->location = glm::vec3(x, y, 0);
-	this->r = r;
-};
-float Location::getX() const { return this->location.x; };
-float Location::getY() const { return this->location.y; };
-float Location::getR() const { return this->r; };
-
-void Location::move(glm::vec3 v) {
-	location += __deltaTime * v;
-}
-
-void Location::spin(const float r) {
-	this->r += __deltaTime * r;
-}
-
-
-class Status {
-private:
-	float speed;
-public:
-	//Status() {};
-	Status(float speed) {
-		this->speed = speed;
-	};
-	float getSpeed() const {
-		return speed;
-	}
-};
-
-class Velocity {
-private:
-	glm::vec3 v = glm::vec3(0, 0, 0.0f);
-	float vr = 0;
-public:
-	Velocity() {};
-	void accel(float x, float y, float z);
-	void accelR(float r) { vr += r; };
-	void reset();
-	glm::vec3 getV() const { return v; };
-	float getVr() const { return vr; }
-};
-
-void Velocity::reset() {
-	v = glm::vec3(0.0f, 0.0f, 0.0f);
-}
-
-void Velocity::accel(float x, float y, float z) {
-	v += glm::vec3(x, y, z);
-}
-enum class UnitType{Player,Magniton,Gasty,Haunter,NA};
-class Unit {
-private:
-	Status* status;
-	Location* location;
-	GLuint textureID;
-	Velocity* v;
-	bool repeat=false;
-	bool boarderFlagX = false;
-	bool boarderFlagY = false;
-	bool onland = false;
-	
-
-	
-
-protected:
-	bool collisionFlag = false;
-	UnitType type;
-	bool dead = false;
-
-
-public:
-	glm::vec3 size;//probably gonna make a class for this later
-	//Unit() {};
-	Unit(float speed, float x, float y, float r);
-	virtual void update() = 0 {};
-	void setTexture(const char*,bool repeat=false);
-	void moveLeft() { v->accel(-status->getSpeed() * __deltaTime, 0, 0); }
-	void moveRight() { v->accel(status->getSpeed() * __deltaTime, 0, 0); }
-	void moveUp() { v->accel(0, status->getSpeed() * __deltaTime, 0); }
-	void moveDown() { v->accel(0, -status->getSpeed() * __deltaTime, 0); }
-	void jump();
-	void land();
-	void accel(float x, float y, float z);
-	void accelR(float r) {
-		v->accelR(r); if (v->getVr() > 80) { __states.__GAMEOVER__(); }
-	};
-	void bounceX();
-	void bounceY();
-	void move();//move with velocity
-	virtual void render() const;
-	bool checkCollisionBox(Unit* other);
-	virtual void processCollision(Unit* other);
-	float getDistance(Unit* other) const {
-		return std::sqrt(std::pow(location->getX() - other->location->getX(), 2) + std::pow(location->getY() - other->location->getY(), 2));
-	}
-
-	bool onBoarder() {
-		if (!boarderFlagX) {
-			if (location->getX() > __boardSizeX - abs(size.x) / 2 || location->getX() < abs(size.x) / 2 - __boardSizeX) {
-				bounceX();
-				//__states.__GAMEOVER__();
-				boarderFlagX = true;
-			}
-		}
-		else {
-			if (!(location->getX() > __boardSizeX - abs(size.x) / 2 || location->getX() < abs(size.x) / 2 - __boardSizeX)) {
-				boarderFlagX = false;
-			}
-		}
-
-		if (!boarderFlagY) {
-			if (location->getY() > __boardSizeY - abs(size.y) / 2 || location->getY() < abs(size.y) / 2 - __boardSizeY) {
-				bounceY();
-				boarderFlagY = true;
-			}
-		}
-		else {
-			if (!(location->getY() > __boardSizeY - abs(size.y) / 2 || location->getY() < abs(size.y) / 2 - __boardSizeY)) {
-				boarderFlagY = false;
-			}
-		}
-		return boarderFlagX || boarderFlagY;
-	}
-	void setMatrix(float* m, float*,float*, float* model) const;
-	void die();
-	UnitType getType() const { return type; };
-	const glm::vec3& getV() const{ return v->getV(); }
-	bool isAlive() const { return !dead; }
-	bool landed() const { return onland; }
-};
-
-enum class BlockType { Deadly, Bouncy, Platform };
-
-
-
-class Player :public Unit {
-private:
-	BuffSkill powerShield;
-	bool boosted=false;
-public:
-	Player(float speed, float x, float y, float r) :Unit(speed, x, y, r), powerShield(15, 10, "power shield") { Unit::type = UnitType::Player; };
-	void update() {
-		accel(0, __states.gravity * __deltaTime, 0);
-		if (landed()) {
-			if (abs(getV().x) > abs(__states.friction * __deltaTime)) {
-				accel(sign(getV().x) * __states.friction * __deltaTime, 0, 0);
-			}
-			else {
-				accel(-getV().x, 0, 0);
-			}
-		}
-
-		move();
-
-		powerShield.update();
-		if (powerShield.inEffect()) {
-			if (!boosted) { boosted = true; size.x *= 1.6; }
-		}
-		else {
-			if (boosted) { boosted = false; size.x /= 1.6; }
-		}
-	};
-	void activateSkill() {
-		powerShield.activate();
-	}
-	bool isBoosted() const {
-		return boosted;
-	}
-};
-
-class Block :public Unit {
-private:
-	BlockType type;
-public:
-	Block(BlockType type, float x, float y, float r);
-	const BlockType getType();
-	void processCollision(Unit* other);
-	void update() { if (dead) return; processCollision(__states.player); };
-};
-
-class Magniton :public Block {
-private:
-	Skill flee;
-public:
-	Magniton(float x, float y, float r) :Block(BlockType::Bouncy,x,y,r),flee(5.0) {};
-	void update();
-};
-
-void Magniton::update() {
-	if (getDistance(__states.player) < 2&&__states.player->isBoosted()) {
-		if (flee.activate() !=-1) {
-			accel(__states.player->getV().x*.3, __states.player->getV().y*.3,0);
-		}
-	}
-
-	if (onBoarder()) {die();}
-	Unit::move();
-	Block::update();
-}
-
-class Gasty :public Block {
-private:
-	BuffSkill voidForm;
-public:
-	void update();
-	Gasty(float x, float y, float z) :Block(BlockType::Deadly, x, y, z), voidForm(10.0, 3.0, "void form") { Unit::type = UnitType::Gasty; };
-	void processCollision(Player* other);
-	void render() const;
-
-};
-
-void Gasty::render() const{
-	if (!voidForm.inEffect()) {
-		Unit::render();
-	}
-}
-
-void Gasty::update() {
-	if (dead) {
-		return;
-	}
-	voidForm.update();
-	if (getDistance(__states.player)<2) {
-		if (__states.player->isBoosted()) {
-			voidForm.activate();
-		}
-	}
-	processCollision(__states.player);
-
-}
-
-void Gasty::processCollision(Player* other) {
-	if (!voidForm.inEffect()) {
-		if (!collisionFlag) {
-			if (checkCollisionBox(other)) {
-
-				if (other->isBoosted()) {
-					die();
-					return;
-				}
-				__states.__GAMEOVER__();
-				bounceX();
-				collisionFlag = true;
-			}
-		}
-		else {
-			if (!checkCollisionBox(other)) {
-				collisionFlag = false;
-			}
-		}
-	}
-
-}
-
-
-
-
-class Haunter:public Unit {
-public:
-	Haunter(float speed, float x, float y, float r) :Unit(speed, x, y, r) { Unit::type = UnitType::Haunter; };
-	void update();
-	void processCollision(Player* other);
-};
-
-void Haunter::processCollision(Player* other) {
-		if (!collisionFlag) {
-			if (checkCollisionBox(other)) {
-				if (other->isBoosted()) {
-					die();
-					return;
-				}
-				__states.__GAMEOVER__();
-				bounceX();
-				collisionFlag = true;
-			}
-		}
-		else {
-			if (!checkCollisionBox(other)) {
-				collisionFlag = false;
-			}
-		}
-}
-
-void Haunter::update() {
-	if (dead) return;
-	move();
-	processCollision(__states.player);
-	//NPC->processCollision(playerB);
-	//check collision circular
-	/*not for this task
-	if (NPC->getDistance(player) < 1) {
-		player->bounceX();
-		player->bounceY();
-		player->accelR(5);
-		//__states.__GAMEOVER__();
-	}*/
-	//check boarder
-	onBoarder();
-}
-
-
-
-void GameStatus::spawnNPC(GLuint num) {
-	for (GLuint i = 0; i < num; ++i) {
-		Unit* newNPC = new Haunter(4, -4, 2 * i, 0);//need some other way to get the spawn location
-		newNPC->setTexture("Haunter");//need NPC image list in future 
-		newNPC->accel(i, pow(-1, i), 0);//speed
-		NPCList.push_back(newNPC);
-	}
-}
-
-void GameStatus::updateNPC() {
-	for (Unit* NPC : NPCList) {
-		NPC->update();
-	}
-	for (Block* block : blockList) {
-		block->update();
-	}
-}
-
-void GameStatus::renderNPC() {//and blocks
-	for (Unit* NPC : NPCList) {
-		NPC->render();
-	}
-
-	for (Block* block : blockList) {
-		block->render();
-	}
-}
-
-void GameStatus::buildPlatform() {
-	Block* newBlock = new Block(BlockType::Platform, 0, -7, 0);
-	newBlock->setTexture("Squirtle",true);//need NPC image list in future
-	newBlock->size.x = 20;
-	blockList.push_back(newBlock);
-}
-
-
-void GameStatus::buildNPC2() {
-	bool isDeadly = false;
-	for (float x = -8; x < 10; x += 7) {
-		if (isDeadly) {
-			Block* newBlock = new Gasty(x, 0, 0);
-			newBlock->setTexture("Gasty");//need NPC image list in future 
-			NPCList.push_back(newBlock);
-		}
-
-		else {
-			Block* newBlock = new Magniton(x, 0, 0);
-			newBlock->setTexture("Magnimon");//need NPC image list in future 
-			NPCList.push_back(newBlock);
-		}
-
-		isDeadly = !isDeadly;
-	}
-}
-
-void GameStatus::DrawTextGL(ShaderProgram* program, GLuint fontTextureID, std::string text, float size, float spacing, glm::vec3 position)
-{
-	float width = 1.0f / 16.0f;
-	float height = 1.0f / 16.0f;
-
-	std::vector<float> vertices;
-	std::vector<float> texCoords;
-
-	for (int i = 0; i < text.size(); i++) {
-
-		int index = (int)text[i];
-		float offset = (size + spacing) * i;
-		float u = (float)(index % 16) / 16.0f;
-		float v = (float)(index / 16) / 16.0f;
-		vertices.insert(vertices.end(), {
-		 offset + (-0.5f * size), 0.5f * size,
-		 offset + (-0.5f * size), -0.5f * size,
-		 offset + (0.5f * size), 0.5f * size,
-		 offset + (0.5f * size), -0.5f * size,
-		 offset + (0.5f * size), 0.5f * size,
-		 offset + (-0.5f * size), -0.5f * size, });
-		texCoords.insert(texCoords.end(), {
-			u, v,
-			u, v + height,
-			u + width, v,
-			u + width, v + height,
-			u + width, v,
-			u, v + height,
-			});
-
-	} // end of for loop 
-	glm::mat4 modelMatrix = glm::mat4(1.0f);
-	modelMatrix = glm::translate(modelMatrix, position);
-	program->SetModelMatrix(modelMatrix);
-
-	glUseProgram(program->programID);
-
-	glVertexAttribPointer(program->positionAttribute, 2, GL_FLOAT, false, 0, vertices.data());
-	glEnableVertexAttribArray(program->positionAttribute);
-
-	glVertexAttribPointer(program->texCoordAttribute, 2, GL_FLOAT, false, 0, texCoords.data());
-	glEnableVertexAttribArray(program->texCoordAttribute);
-
-	glBindTexture(GL_TEXTURE_2D, fontTextureID);
-	glDrawArrays(GL_TRIANGLES, 0, (int)(text.size() * 6));
-
-	glDisableVertexAttribArray(program->positionAttribute);
-	glDisableVertexAttribArray(program->texCoordAttribute);
-}//copied from lecture slide
-
-Unit::Unit(float speed, float x, float y, float r) {
-	status = new Status(speed);
-	location = new Location(x, y, r);
-	v = new Velocity();
-	textureID = -1;
-	size = glm::vec3(1, 1, 1);
-	type = UnitType::NA;
-};
-
-void Unit::accel(float x, float y, float z) {
-	v->accel(x, y, z);
-}
-
-void Unit::move() {
-	location->move(v->getV());
-	location->spin(v->getVr());
-}
-
-bool Unit::checkCollisionBox(Unit* other) {
-	if (abs(location->getX() - other->location->getX()) < (abs(size.x) + abs(other->size.x)) / 2) {
-		if (abs(location->getY() - other->location->getY()) < (abs(size.y) + abs(other->size.y)) / 2) {
-			/*
-			std::stringstream os;
-			os << "collision detected";
-			std::string intString = os.str();
-			MessageBox(0, (LPCTSTR)intString.c_str(), "", MB_OK);
-			*/
-			return true;
-		}
-	}
-	return false;
-}
-
-void Unit::processCollision(Unit* other) {
-
-	if (!collisionFlag) {
-		if (checkCollisionBox(other)) {
-			__states.__GAMEOVER__();
-			bounceX();
-			collisionFlag = true;
-		}
-	}
-	else {
-		if (!checkCollisionBox(other)) {
-			collisionFlag = false;
-		}
-	}
-}
-
-void Unit::bounceX() {
-	size.x *= -1;
-	v->accel(-2 * v->getV().x, 0, 0);
-}
-
-void Unit::bounceY() {
-	v->accel(0, -2 * v->getV().y, 0);
-}
-
-void Unit::setMatrix (float* toSetV, float* toSetT, float* modelV, float*modelT) const{
-	bool isX = true;
-	for (int i = 0; i < 12; ++i) {
-		if (isX) {
-			toSetV[i] = size.x * modelV[i];
-			if (repeat) {
-				toSetT[i] = modelT[i] * size.x;
-			}
-			else {
-				toSetT[i] = modelT[i];
-			}
-		}
-		else {
-			toSetV[i] = size.y * modelV[i];
-			if (repeat) {
-				toSetT[i] = modelT[i] * size.y;
-			}
-			else {
-				toSetT[i] = modelT[i];
-			}
-		}
-		isX = !isX;
-	}
-
-}
-
-void Unit::die() { dead = true; }
-
-void Unit::land() {
-	v->accel(0,-v->getV().y,0);
-	onland = true;
-}
-
-void Unit::jump() {
-	if (onland) {
-		v->accel(0, -3 * __states.gravity, 0);
-	}
-	onland = false;
-}
-
-void Unit::render() const {
-	/*
-	std::stringstream os;
-	os << "TID: "<<textureID<<"\nx: "<< std::fixed<<std::setprecision(2)<<location->getX()<<"\ny: "<<location->getY();
-	std::string intString = os.str();
-	MessageBox(0, (LPCTSTR)intString.c_str(), "", MB_OK);
-	*/
-	if (dead) {
-		return;
-	}
-	if (textureID == -1) {
-		assert(false);
-	}
-	this->setMatrix(__states.unitVertices,__states.unitTexCoords, __states.modelUnitVertices, __states.modelTexCoords);
-	__program.SetProjectionMatrix(__projectionMatrix);
-	__program.SetViewMatrix(__viewMatrix);
-	__modelMatrix = glm::mat4(1.0f);
-	__modelMatrix = glm::translate(__modelMatrix, location->getLocation());
-	__modelMatrix = glm::rotate(__modelMatrix, glm::radians(location->getR()), glm::vec3(0.0f, 0.0f, 1));
-	//__modelMatrix = glm::scale(__modelMatrix, size);
-	__program.SetModelMatrix(__modelMatrix);
-
-	if (repeat) {
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	}
-	glBindTexture(GL_TEXTURE_2D, textureID);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-}
-
-
-
-void Unit::setTexture(const char* name, bool repeat) {
-	this->textureID = __states.textureIDs[name];
-	this->repeat = repeat;
-	/*
-	std::stringstream os;
-	os << textureID;
-	std::string intString = os.str();
-	MessageBox(0, (LPCTSTR)intString.c_str(), "", MB_OK);
-	*/
-}
-
-
-
-Block::Block(BlockType type, float x, float y, float r) :Unit(0.0, x, y, r) {
-	this->type = type;
-	
-}
-
-const BlockType Block::getType() {
-	return type;
-}
-
-
-void Block::processCollision(Unit* other) {
-	switch (type) {
-	case BlockType::Bouncy:
-		if (!collisionFlag) {
-			if (checkCollisionBox(other)) {
-				other->bounceX();
-				other->bounceY();
-				collisionFlag = true;
-			}
-		}
-		else {
-			if (!checkCollisionBox(other)) {
-				collisionFlag = false;
-			}
-		}
-		return;
-	case BlockType::Deadly:
-		if (checkCollisionBox(other)) {
-			__states.__GAMEOVER__();
-		}
-		return;
-
-	case BlockType::Platform:
-		if (checkCollisionBox(other)) {
-			//__states.__GAMEWIN__();
-			other->land();
-		}
-		return;
-	}
-}
-
-
-
+Scene* currentLevel;
+int levelN = -1;
+Mix_Music *music;
 void Initialize() {
-	SDL_Init(SDL_INIT_VIDEO);
-	__displayWindow = SDL_CreateWindow("TIME TO FIGHT BACK!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_OPENGL);
-	SDL_GLContext context = SDL_GL_CreateContext(__displayWindow);
-	SDL_GL_MakeCurrent(__displayWindow, context);
-
-#ifdef _WINDOWS
-	glewInit();
-#endif
-
-	glViewport(0, 0, 640, 480);
-
-	__program.Load("shaders/vertex_textured.glsl", "shaders/fragment_textured.glsl");
-	__viewMatrix = glm::mat4(1.0f);
-	__modelMatrix = glm::mat4(1.0f);
-	__projectionMatrix = glm::ortho(-10.0f, 10.0f, -7.5f, 7.5f, -1.0f, 1.0f);
-	__program.SetProjectionMatrix(__projectionMatrix);
-	__program.SetViewMatrix(__viewMatrix);
-	__program.SetColor(1.0f, 0.0f, 0.0f, 1.0f);
-
-	glUseProgram(__program.programID);
-
-	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-	
-
-	//load textures
-	std::string a("Gasty");
-	__states.loadTexture(a, "images/Gasty.png");
-	a = "Haunter";
-	__states.loadTexture(a, "images/Haunter.png");
-	a = "ctg";
-	__states.loadTexture(a, "images/ctg.png");
-	a = "Squirtle";
-	__states.loadTexture(a, "images/Squirtle.jfif");
-	a = "Magnimon";
-	__states.loadTexture(a, "images/Magnimon.png");
-	a = "font1";
-	__states.loadTexture(a, "fonts/font1.png");
-
-
-	//transparency
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	//set gravity
-	//intialize units and set attributes
-	//player
-	__states.player = new Player(3, 0, 7.0, 0);
-	__states.player->setTexture("ctg");
-	__states.player->size = glm::vec3(1, 2, 1);
-	/*__states.playerB = new Unit(4, 9.5, 0, 0);
-	__states.playerB->loadTexture("images/ctg.png");
-	__states.playerB->size = glm::vec3(1, -5, 1);*/
-	
-	//NPC
-	__states.spawnNPC(3);
+	SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO);
+	Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 4096);
 	__lastTicks = (float)SDL_GetTicks() / 1000.0f;
-
-	//Blocks
-	__states.buildPlatform();
-	__states.buildNPC2();
-	__states.unitVertices = new float[12] { -.5, -.5, .5, -.5, .5, .5, -.5, -.5, .5, .5, -.5, 0.5 };
-	__states.modelUnitVertices = new float[12]{ -.5, -.5, .5, -.5, .5, .5, -.5, -.5, .5, .5, -.5, 0.5 };
-	__states.unitTexCoords = new float[12] { 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0 };
-	__states.modelTexCoords= new float[12]{ 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0 }; 
-	__states.state = GameState::GAME;
+	music = Mix_LoadMUS("music/crypto.mp3");
+	Mix_PlayMusic(music, -1);
 }
+bool begin = false;
 
 void ProcessInput() {
 	//get delta time
@@ -866,7 +53,7 @@ void ProcessInput() {
 		case SDL_WINDOWEVENT_CLOSE:
 			gameIsRunning = false;
 			break;
-
+				
 		case SDL_KEYDOWN:
 			switch (event.key.keysym.sym) {
 			case SDLK_ESCAPE:
@@ -885,19 +72,25 @@ void ProcessInput() {
 		__states.player->moveDown();
 	}*/
 	///* disabling player horizontal move
-	if (__states.state == GameState::GAME) {
+	if (begin) {
 		if (__keys[SDL_SCANCODE_A]) {
-			__states.player->moveLeft();
+			currentLevel->__entities.player->moveLeft(__deltaTime);
 		}
 		if (__keys[SDL_SCANCODE_D]) {
-			__states.player->moveRight();
+			currentLevel->__entities.player->moveRight(__deltaTime);
 		}
 		if (__keys[SDL_SCANCODE_SPACE]) {
-			__states.player->jump();
+			currentLevel->__entities.player->jump();
 		}
 		if (__keys[SDL_SCANCODE_E]) {
-			__states.player->activateSkill();
+			currentLevel->__entities.player->activateSkill();
 		}
+	}
+	else {
+		if (__keys[SDL_SCANCODE_RETURN]) {
+				begin = true;
+			}
+		
 	}
 	//*/
 
@@ -912,59 +105,17 @@ void ProcessInput() {
 
 }
 
-void Update() {
-	//check if win
-	bool winFlag = true;
-	for (Unit* unit : __states.NPCList) {
-		if (unit->isAlive()) {
-			winFlag = false;
-		}
+bool Update() {
+	currentLevel->Update(__deltaTime);
+	if (currentLevel->__entities.switchScene) {
+		levelN += 1;
+		return true;
 	}
-	if (winFlag) {
-		__states.__GAMEWIN__();
-	}
-	
-
-	__states.player->update();
-	//__states.playerB->move();
-	__states.updateNPC();
-	if (__states.player->onBoarder()) {
-		//__states.__GAMEOVER__();
-	}
-	//boardercheck
-	//__states.playerB->onBoarder();
-
+	return false;
 }
 
 void Render() {
-	glClear(GL_COLOR_BUFFER_BIT);
-	glVertexAttribPointer(__program.positionAttribute, 2, GL_FLOAT, false, 0, __states.unitVertices);
-	glEnableVertexAttribArray(__program.positionAttribute);
-	glVertexAttribPointer(__program.texCoordAttribute, 2, GL_FLOAT, false, 0, __states.unitTexCoords);
-	glEnableVertexAttribArray(__program.texCoordAttribute);
-	//draw items
-	
-	//MessageBox(0, "Prepared to render", "", MB_OK);
-	
-	__states.player->render();
-	//__states.playerB->render();
-	__states.renderNPC();
-	if (__states.state == GameState::WIN) {
-		__states.DrawTextGL(&__program, __states.textureIDs["font1"], "MISSION ACCOMPLISHED", 1.3f, -.6f, glm::vec3(-8, 4, 0));
-	}
-	if (__states.state == GameState::LOSE) {
-		__states.DrawTextGL(&__program, __states.textureIDs["font1"], "MISSION FAILED", 1.3f, -.3f, glm::vec3(-8, 4, 0));
-	}
-	if (__states.state == GameState::GAME) {
-		__states.DrawTextGL(&__program, __states.textureIDs["font1"], "TIME TO FIGHT BACK!", .8f, -.3f, glm::vec3(-8, 4, 0));
-		__states.DrawTextGL(&__program, __states.textureIDs["font1"], "Press Space To Jump, Press E to activate POWER MODE to destroy the ghosts!",.5f, -.3f, glm::vec3(-8, 2, 0));
-
-	}
-
-	glDisableVertexAttribArray(__program.positionAttribute);
-	glDisableVertexAttribArray(__program.texCoordAttribute);
-
-	SDL_GL_SwapWindow(__displayWindow);
+	currentLevel->Render();
 }
 
 
@@ -973,11 +124,30 @@ void Shutdown() {
 }
 
 int main(int argc, char* argv[]) {
+	
 	Initialize();
+	currentLevel = new Level0;
+	currentLevel->Initialize(3);
+	
+
+	Scene* levelLst[3];
+	levelLst[0] = new Level1;
+	levelLst[1] = new Level2;
+	levelLst[2]=  new Level3;
+	size_t life = 3;
 	while (gameIsRunning) {
 		ProcessInput();
-		if (__states.state == GameState::GAME) {
-			Update();
+		if (begin) {
+			if (levelN == -1) {
+				levelN += 1;
+				currentLevel = levelLst[levelN];
+				currentLevel->Initialize(life);
+			}
+			if (Update()) {
+				life = currentLevel->__entities.player->lifeCount;
+				currentLevel = levelLst[levelN];
+				currentLevel->Initialize(life);
+			};
 		}
 		Render();
 	}

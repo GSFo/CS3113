@@ -20,9 +20,7 @@ unsigned int level2_data[] =
 
 
 void Level2::Initialize(size_t lifeCount) {
-	__displayWindow = SDL_CreateWindow("TIME TO FIGHT BACK!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_OPENGL);
-	SDL_GLContext context = SDL_GL_CreateContext(__displayWindow);
-	SDL_GL_MakeCurrent(__displayWindow, context);
+	__displayWindow = SDL_GL_GetCurrentWindow();
 
 #ifdef _WINDOWS
 	glewInit();

@@ -1,3 +1,12 @@
-﻿  Level0.cpp
+﻿  Level2.cpp
 E:\C++ project\CS3113\CS3113\P1\SDLProject\GameStates.h(17): warning C4091: 'static ': ignored on left of 'GameStatus::GameState' when no variable is declared
+E:\C++ project\CS3113\CS3113\P1\SDLProject\Level2.cpp(158,38): warning C4244: 'argument': conversion from 'GLuint' to 'float', possible loss of data
+E:\C++ project\CS3113\CS3113\P1\SDLProject\Level2.cpp(160,23): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+E:\C++ project\CS3113\CS3113\P1\SDLProject\Level2.cpp(160,17): warning C4244: 'argument': conversion from 'GLuint' to 'float', possible loss of data
+  Level3.cpp
+E:\C++ project\CS3113\CS3113\P1\SDLProject\GameStates.h(17): warning C4091: 'static ': ignored on left of 'GameStatus::GameState' when no variable is declared
+E:\C++ project\CS3113\CS3113\P1\SDLProject\Level3.cpp(158,38): warning C4244: 'argument': conversion from 'GLuint' to 'float', possible loss of data
+E:\C++ project\CS3113\CS3113\P1\SDLProject\Level3.cpp(160,23): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+E:\C++ project\CS3113\CS3113\P1\SDLProject\Level3.cpp(160,17): warning C4244: 'argument': conversion from 'GLuint' to 'float', possible loss of data
+  Generating Code...
   SDLProject.vcxproj -> E:\C++ project\CS3113\CS3113\P1\SDLProject\Debug\SDLProject.exe

@@ -1,12 +1,20 @@
-You are not supposed to touch the ghost type Pokémon, Gasty and Haunter. Yet, Magnetons are safe and you will only bounce back on them. (I'd probably better use Snorlax instead of Magnetons since Snorlax feels more bouncy, but I didn't find a proper png image for Snorlax)
+Introduction
+----------------------------
+If you lose all HP, you lose.
+You kill every ghost to win.
 
-Note the ghosts are ghosts so they can go through entities. (well just don't wanna make collision detections between them :p)
+Player skill information:
+--------------------------------------
+WASD to accel. 
+J skill, water gun: shoot a small water ball to the front of you that deal damage.
+K skill, withdraw: Activate shield. When shield is activated, you don't take any damage. Shield duration 3s, cd 15s.
 
-You have a bunch of Squirtles to hold your back. You can safely land or jump on them.   
 
-Press E to activate power mode, Duration 10s, Cold down 15s. You destroy every ghost you touch when power mode is on.
 
-Magnetons try to escape from you when you approach them with power mode on; Gasties hides in the void when you approach them with power mode on and return after several seconds.
-Haunters do paralleling.
-
-Your goal is to eliminate everything on the screen.
+Enemy information:
+------------------------------------------
+Haunter: move around and do damage on collision.
+Gengar:
+Dash to you periodically;
+Uses curse to weaken you whenever it is ready and you do not have shield up. When you are weaken, you do very little damage, cannot control moving and your HP is reduced by 20%; when curse is over, you get the HP back. You can use shield skill to nullify the weaken debuff.
+Uses shadow sneak to avoid your dashing with shield; Launches shadow balls that flies slow with some damage to you consistently;

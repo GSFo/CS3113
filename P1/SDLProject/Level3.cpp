@@ -61,7 +61,7 @@ void Level3::Initialize(size_t lifeCount) {
 	//set gravity
 	//intialize units and set attributes
 	//player
-	__entities.player = new Player(2, 1, 7.0, 0,lifeCount);
+	//__entities.player = new Player(2, 1, 7.0, 0,lifeCount);
 	__entities.player->setTexture("ctg", __states);
 	__entities.player->size = glm::vec3(1, 2, 1);
 	/*__states.playerB = new Unit(4, 9.5, 0, 0);
@@ -139,7 +139,7 @@ void Level3::Render() {
 		Utility::DrawTextGL(&__program, __states.textureIDs["font1"], "MISSION FAILED", .6f, -.3f, glm::vec3(-4, 2, 0) + glm::vec3(__entities.player->location->getX(), 0, 0));
 	}
 	if (__states.state == GameStatus::GameState::GAME) {
-		Utility::DrawTextGL(&__program, __states.textureIDs["font1"], "TIME TO FIGHT BACK!Life: " + std::to_string(__entities.player->lifeCount), .6f, -.3f, glm::vec3(-4, 1, 0) + glm::vec3(__entities.player->location->getX(), 0, 0));
+		//Utility::DrawTextGL(&__program, __states.textureIDs["font1"], "TIME TO FIGHT BACK!Life: " + std::to_string(__entities.player->), .6f, -.3f, glm::vec3(-4, 1, 0) + glm::vec3(__entities.player->location->getX(), 0, 0));
 		Utility::DrawTextGL(&__program, __states.textureIDs["font1"], "Press Space To Jump, Press E to activate POWER MODE to destroy the ghosts!", .2f, -.1f, glm::vec3(-4, 2, 0) + glm::vec3(__entities.player->location->getX(), 0, 0));
 
 	}

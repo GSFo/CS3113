@@ -15,6 +15,9 @@ public:
 	glm::vec3 getLocation() const {
 		return location;
 	}
+	void setLocation(float x, float y, float r) {
+		this->location = glm::vec3(x, y, r);
+	}
 	void move(glm::vec3,float);
 };
 
@@ -24,11 +27,47 @@ public:
 class Status {
 private:
 	float speed;
+	float power;
+	float health;
 public:
 	//Status() {};
-	Status(float speed) {
-		this->speed = speed;
+	Status(float speed):speed(speed),power(1),health(1) {
+	
 	};
+	Status(float speed, float power, float health) :speed(speed), power(power), health(health) {
+		
+	}
+
+	void buffed(float spd, float pow, float hp) {
+		speed *= spd;
+		power *= pow;
+		health *= hp;
+	}
+
+
+	void setStatus(float spd, float pow, float hp) {
+		speed = spd;
+		power = pow;
+		health = hp;
+	}
+
+	bool loseLife(float dmg) {
+		if (health <= dmg) {
+			health = 0;
+			return true;
+		}
+		health -= dmg;
+		return false;
+	}
+
+	float getPower() const {
+		return power;
+	}
+	
+	float getHealth() const {
+		return health;
+	}
+
 	float getSpeed() const {
 		return speed;
 	}

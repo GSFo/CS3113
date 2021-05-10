@@ -3,15 +3,77 @@
 
 #pragma once
 
-#define LEVEL1_WIDTH 14
-#define LEVEL1_HEIGHT 5
+#define LEVEL1_WIDTH 56
+#define LEVEL1_HEIGHT 12
 unsigned int level1_data[] =
 {
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+
+
+
 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
-1, 1, 1, 1, 0, 0, 1, 1, 1, 2, 2, 2, 2, 2,
-2, 2, 2, 2, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0,
+
+
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
+
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0,
+
+
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0,
+
+
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0,
+
+
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0,
+
+1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+
+2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
 };
 
 
@@ -31,7 +93,7 @@ void Level1::Initialize(size_t lifeCount) {
 	__program.Load("shaders/vertex_textured.glsl", "shaders/fragment_textured.glsl");
 	__viewMatrix = glm::mat4(1.0f);
 	__modelMatrix1 = glm::mat4(1.0f);
-	__projectionMatrix1 = glm::ortho(-5.0f, 5.0f, -4.0f, 4.0f, -1.0f, 1.0f);
+	__projectionMatrix1 = glm::ortho(-8.0f, 8.0f, -11.0f, 0.0f, -1.0f, 1.0f);
 	__program.SetProjectionMatrix(__projectionMatrix1);
 	__program.SetViewMatrix(__viewMatrix);
 	__program.SetColor(1.0f, 0.0f, 0.0f, 1.0f);
@@ -42,36 +104,37 @@ void Level1::Initialize(size_t lifeCount) {
 
 
 	//load textures
-	std::string a("Gasty");
-	__states.loadTexture(a, "images/Gasty.png");
+	std::string a("Shadowball");
+	__states.loadTexture(a, "images/Shadowball.png");
 	a = "Haunter";
 	__states.loadTexture(a, "images/Haunter.png");
 	a = "ctg";
-	__states.loadTexture(a, "images/ctg.png");
-	a = "Squirtle";
 	__states.loadTexture(a, "images/Squirtle.jfif");
+	a = "Waterball";
+	__states.loadTexture(a, "images/Waterball.png");
 	a = "Magnimon";
 	__states.loadTexture(a, "images/Magnimon.png");
 	a = "font1";
 	__states.loadTexture(a, "fonts/font1.png");
+	a = "Gengar";
+	__states.loadTexture(a, "images/Gengar.png");
 
 
 	//transparency
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	//set gravity
 	//intialize units and set attributes
 	//player
-	__entities.player = new Player(2, 1, 7.0, 0,lifeCount);
+	__entities.player = new Player(2,2,15, 1, -5, 0);
+	__entities.FriendLst.push_back(__entities.player);
 	__entities.player->setTexture("ctg",__states);
-	__entities.player->size = glm::vec3(1, 2, 1);
-	/*__states.playerB = new Unit(4, 9.5, 0, 0);
-	__states.playerB->loadTexture("images/ctg.png");
-	__states.playerB->size = glm::vec3(1, -5, 1);*/
-
+	__entities.player->bulletTexture = Utility::loadTexture("images/Waterball.png");
+	
 	//NPC
-	spawnNPC(3);
-
+	spawnNPC(6);
+	bossPtr=spawnBoss();
+	bossPtr->shadowBallTexture = Utility::loadTexture("images/Shadowball.png");
+	bossPtr->setBossptr(bossPtr);
 	//Blocks
 	//__entities.buildPlatform();
 	//__entities.buildNPC2();
@@ -99,7 +162,7 @@ void Level1::Update(float deltaTime) {
 			}
 		}
 		if (winFlag) {
-			__entities.switchScene = true;
+			__states.__GAMEWIN__();
 		}
 
 
@@ -107,22 +170,43 @@ void Level1::Update(float deltaTime) {
 
 		//__states.playerB->move();
 		updateNPC(deltaTime);
+		if (bossPtr != nullptr) {
+			bossPtr->useShadowBall(__entities.projectileList, __entities.player->location->getX(), __entities.player->location->getY());
+			bossPtr->useDash(__entities.player->location->getX(), __entities.player->location->getY());
+			if (!__entities.player->isBoosted()) {
+				bossPtr->activateWeaken(__entities.player);
+			}
+		}
+
+		
 		if (__entities.player->onBoarder(__entities.map)) {
 			//__states.__GAMEOVER__();
 		}
 		//boardercheck
 		//__states.playerB->onBoarder();
-		__viewMatrix = glm::mat4(1.0f);
-		if (__entities.player->location->getLocation().x > 5) {
-			__viewMatrix = glm::translate(__viewMatrix, glm::vec3(-__entities.player->location->getLocation().x, 0, 0));
+		
+		if (bossPtr != nullptr && abs(bossPtr->location->getX() - __entities.player->location->getX()) < 6) {
+			lockView = true;
 		}
-		else {
-			__viewMatrix = glm::translate(__viewMatrix, glm::vec3(-5, 0, 0));
+		if (bossPtr == nullptr) {
+			lockView = false;
+		}
+
+		if (!lockView) {
+			__viewMatrix = glm::mat4(1.0f);
+				if (__entities.player->location->getLocation().x > 7) {
+					__viewMatrix = glm::translate(__viewMatrix, glm::vec3(-__entities.player->location->getLocation().x, 0, 0));
+				}
+				else {
+					__viewMatrix = glm::translate(__viewMatrix, glm::vec3(-7, 0, 0));
+				}
 		}
 	}
 }
 void Level1::Render() {
 	glClear(GL_COLOR_BUFFER_BIT);
+
+	__entities.map->Render(&__program);
 	glVertexAttribPointer(__program.positionAttribute, 2, GL_FLOAT, false, 0, __states.unitVertices);
 	glEnableVertexAttribArray(__program.positionAttribute);
 	glVertexAttribPointer(__program.texCoordAttribute, 2, GL_FLOAT, false, 0, __states.unitTexCoords);
@@ -130,46 +214,90 @@ void Level1::Render() {
 	//draw items
 
 	//MessageBox(0, "Prepared to render", "", MB_OK);
+	
+
 
 	__entities.player->render(__program, __viewMatrix, __modelMatrix1, __projectionMatrix1,__states);
 	//__states.playerB->render();
 	renderNPC();
 	if (__states.state == GameStatus::GameState::WIN) {
-		Utility::DrawTextGL(&__program, __states.textureIDs["font1"], "MISSION ACCOMPLISHED", .6f, -.3f, glm::vec3(-4, 2, 0) + glm::vec3(__entities.player->location->getX(), 0, 0));
+		Utility::DrawTextGL(&__program, __states.textureIDs["font1"], "MISSION ACCOMPLISHED", 1.0f, -.5f, glm::vec3(-4, 2, 0) + glm::vec3(__entities.player->location->getX(), -5, 0));
 	}
 	if (__states.state == GameStatus::GameState::LOSE) {
-		Utility::DrawTextGL(&__program, __states.textureIDs["font1"], "MISSION FAILED", .6f, -.3f, glm::vec3(-4, 2, 0) + glm::vec3(__entities.player->location->getX(), 0, 0));
+		Utility::DrawTextGL(&__program, __states.textureIDs["font1"], "MISSION FAILED", 1.0f, -.5f, glm::vec3(-4, 2, 0) + glm::vec3(__entities.player->location->getX(), -5, 0));
 	}
-	if (__states.state == GameStatus::GameState::GAME) {
-		Utility::DrawTextGL(&__program, __states.textureIDs["font1"], "TIME TO FIGHT BACK! Life: "+std::to_string(__entities.player->lifeCount), .6f, -.3f, glm::vec3(-4, 1, 0) + glm::vec3(__entities.player->location->getX(), 0, 0));
-		Utility::DrawTextGL(&__program, __states.textureIDs["font1"], "Press Space To Jump, Press E to activate POWER MODE to destroy the ghosts!", .2f, -.1f, glm::vec3(-4, 2, 0) + glm::vec3(__entities.player->location->getX(), 0, 0));
+	//if (__states.state == GameStatus::GameState::GAME) {
+		//Utility::DrawTextGL(&__program, __states.textureIDs["font1"], "TIME TO FIGHT BACK! Life: "+std::to_string(__entities.player->lifeCount), .6f, -.3f, glm::vec3(-4, 1, 0) + glm::vec3(__entities.player->location->getX(), 0, 0));
+		//Utility::DrawTextGL(&__program, __states.textureIDs["font1"], "Press Space To Jump, Press E to activate POWER MODE to destroy the ghosts!", .2f, -.1f, glm::vec3(-4, 2, 0) + glm::vec3(__entities.player->location->getX(), 0, 0));
 
-	}
+	//}
 
 	glDisableVertexAttribArray(__program.positionAttribute);
 	glDisableVertexAttribArray(__program.texCoordAttribute);
 
-	__entities.map->Render(&__program);
 	SDL_GL_SwapWindow(__displayWindow);
 }
 
 
 
-void Level1::spawnNPC(GLuint num) {
-	for (GLuint i = 0; i < num; ++i) {
-		Unit* newNPC = new Haunter(4, 2, 2 * i, 0);//need some other way to get the spawn location
+void Level1::spawnNPC(size_t num) {
+	for (int i = 0; i < num; ++i) {
+		Unit* newNPC = new Haunter(4, 3, -6+i, 0);//need some other way to get the spawn location
 		newNPC->setTexture("Haunter",__states);//need NPC image list in future 
-		newNPC->accel(i, pow(-1, i), 0);//speed
+		newNPC->accel(i%3+1, pow(-1, i), 0);//speed
+		__entities.NPCList.push_back(newNPC);
+	}
+
+	for (int i = 0; i < num; ++i) {
+		Unit* newNPC = new Haunter(20, 3, -6 + i, 0);//need some other way to get the spawn location
+		newNPC->setTexture("Haunter", __states);//need NPC image list in future 
+		newNPC->accel(i%3 + 1, pow(-1, i), 0);//speed
+		__entities.NPCList.push_back(newNPC);
+	}
+
+	for (int i = 0; i < num; ++i) {
+		Unit* newNPC = new Haunter(30, 3, -6 + i, 0);//need some other way to get the spawn location
+		newNPC->setTexture("Haunter", __states);//need NPC image list in future 
+		newNPC->accel(i%3 + 1, pow(-1, i), 0);//speed
 		__entities.NPCList.push_back(newNPC);
 	}
 }
 
+Gengar* Level1::spawnBoss() {
+	Gengar* boss = new Gengar(50,-5,0);
+	boss->setTexture("Gengar", __states);
+	boss->size = glm::vec3(3,3,0);
+	__entities.NPCList.push_back(boss);
+	return boss;
+}
+
 void Level1::updateNPC(float time) {
-	for (Unit* NPC : __entities.NPCList) {
+	for (size_t i = 0; i < __entities.NPCList.size();++i) {
+		Unit* NPC = __entities.NPCList[i];
 		NPC->update(time, __entities.player, __entities.map);
+		if (!NPC->isAlive()) {
+			if (NPC->getType() == UnitType::Gengar) {
+				bossPtr = nullptr;
+			}
+			delete NPC;
+			__entities.NPCList.erase(__entities.NPCList.begin() + i);
+		}
 	}
 	for (Block* block : __entities.blockList) {
 		block->update(time, __entities.player, __entities.map);
+	}
+	for (size_t i = 0; i < __entities.projectileList.size();++i) {
+		Projectile* proj = __entities.projectileList[i];
+		if (proj->getType() == ProjType::Friendly) {
+			proj->update(time, __entities.NPCList, __entities.map);
+		}
+		else {
+			proj->update(time, __entities.FriendLst, __entities.map);
+		}
+		if (!proj->isAlive()) {
+			delete proj;
+			__entities.projectileList.erase(__entities.projectileList.begin()+i);
+		}
 	}
 }
 
@@ -181,6 +309,11 @@ void Level1::renderNPC() {//and blocks
 	for (Block* block : __entities.blockList) {
 		block->render(__program, __viewMatrix, __modelMatrix1, __projectionMatrix1,__states);
 	}
+
+	for (Projectile* proj : __entities.projectileList) {
+		proj->render(__program, __viewMatrix, __modelMatrix1, __projectionMatrix1, __states);
+
+	}
 }
 /*
 void EntityCollection::buildPlatform() {
@@ -190,6 +323,7 @@ void EntityCollection::buildPlatform() {
 	blockList.push_back(newBlock);
 }
 */
+
 /*
 void EntityCollection::buildNPC2() {
 	bool isDeadly = false;
@@ -210,3 +344,7 @@ void EntityCollection::buildNPC2() {
 	}
 }
 */
+
+void Level1::playerShoot() {
+	__entities.player->shoot(__entities.projectileList);
+}

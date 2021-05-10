@@ -21,7 +21,8 @@ public:
 	glm::mat4 __viewMatrix, __modelMatrix1, __projectionMatrix1;
 	ShaderProgram __program;
 	GameStatus __states;
-
+	void playerShoot() override;//just here to bypass the pure virtual restriction
+	Gengar* spawnBoss() override;
 };
 
 

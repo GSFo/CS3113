@@ -2,12 +2,13 @@
 #include<string>
 class Buff {
 private:
-	float timer;
 	std::string name;
+protected:
+	float timer;
 public:
 	Buff(float time, std::string name) :timer(time), name(name) {};
-	void update(float time);
-	void gain(float duration);
+	virtual void update(float time);
+	virtual void gain(float duration);
 	const std::string& getName() const { return name; };
 	bool inEffect() const { return timer != 0; };
 };
@@ -37,6 +38,7 @@ public:
 		}
 	};
 };
+
 
 class BuffSkill :public Skill {
 private:

@@ -55,9 +55,9 @@ void Level0::Render() {
 	//draw items
 
 	//MessageBox(0, "Prepared to render", "", MB_OK);
-		Utility::DrawTextGL(&__program, __states.textureIDs["font1"], "TIME TO FIGHT BACK!", .6f, -.3f, glm::vec3(-4, 1, 0));
-		Utility::DrawTextGL(&__program, __states.textureIDs["font1"], "Press Space To Jump, Press E to activate POWER MODE to destroy the ghosts!", .25f, -.15f, glm::vec3(-4, 2, 0));
-		Utility::DrawTextGL(&__program, __states.textureIDs["font1"], "Press enter to start the game", .4f, -.25f, glm::vec3(-4, 0, 0));
+	Utility::DrawTextGL(&__program, __states.textureIDs["font1"], "TIME TO FIGHT BACK!", .6f, -.3f, glm::vec3(-4, 1, 0));
+	Utility::DrawTextGL(&__program, __states.textureIDs["font1"], "Press WASD To Move, J:Shoot, K:Shield Defense", .25f, -.15f, glm::vec3(-4, 2, 0));
+	Utility::DrawTextGL(&__program, __states.textureIDs["font1"], "Press enter to start the game", .4f, -.25f, glm::vec3(-4, 0, 0));
 
 
 	glDisableVertexAttribArray(__program.positionAttribute);
@@ -72,6 +72,7 @@ void Level0::spawnNPC(GLuint num) {};
 void Level0::updateNPC(float time) {};
 void Level0::renderNPC() {};
 
-
+void Level0::playerShoot() {};
+Gengar* Level0::spawnBoss() { return new Gengar(1, 2, 3); };//placeholder
 
 

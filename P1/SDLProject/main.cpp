@@ -9,8 +9,6 @@
 #include <vector>
 #include<queue>
 #include "Level1.h"
-#include "Level2.h"
-#include "Level3.h"
 #include "Level0.h"
 #include <SDL_Mixer.h>
 float __deltaTime;
@@ -35,7 +33,7 @@ void Initialize() {
 	SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO);
 	Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 4096);
 	__lastTicks = (float)SDL_GetTicks() / 1000.0f;
-	music = Mix_LoadMUS("music/crypto.mp3");
+	music = Mix_LoadMUS("music/BGM.mid");
 	Mix_PlayMusic(music, -1);
 }
 bool begin = false;
@@ -45,6 +43,7 @@ void ProcessInput() {
 	__ticks = (float)SDL_GetTicks() / 1000.0f;
 	__deltaTime = __ticks - __lastTicks;
 	__lastTicks = __ticks;
+
 
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
@@ -63,14 +62,6 @@ void ProcessInput() {
 		}
 	}
 
-	/*disabling player vertical move
-	if (__keys[SDL_SCANCODE_W]) {
-		__states.player->moveUp();
-	}
-
-	if (__keys[SDL_SCANCODE_S]) {
-		__states.player->moveDown();
-	}*/
 	///* disabling player horizontal move
 	if (begin) {
 		if (__keys[SDL_SCANCODE_A]) {
@@ -79,11 +70,26 @@ void ProcessInput() {
 		if (__keys[SDL_SCANCODE_D]) {
 			currentLevel->__entities.player->moveRight(__deltaTime);
 		}
+		if (__keys[SDL_SCANCODE_W]) {
+			currentLevel->__entities.player->moveUp(__deltaTime);
+		}
+
+		if (__keys[SDL_SCANCODE_S]) {
+			currentLevel->__entities.player->moveDown(__deltaTime);
+		}
+		
+		/*
 		if (__keys[SDL_SCANCODE_SPACE]) {
 			currentLevel->__entities.player->jump();
 		}
-		if (__keys[SDL_SCANCODE_E]) {
+		*/
+		if (__keys[SDL_SCANCODE_K]) {
 			currentLevel->__entities.player->activateSkill();
+		}
+
+		//shoot
+		if (__keys[SDL_SCANCODE_J]) {
+			currentLevel->playerShoot();
 		}
 	}
 	else {
@@ -132,8 +138,8 @@ int main(int argc, char* argv[]) {
 
 	Scene* levelLst[3];
 	levelLst[0] = new Level1;
-	levelLst[1] = new Level2;
-	levelLst[2]=  new Level3;
+	levelLst[1] = new Level1;
+	levelLst[2]=  new Level1;
 	size_t life = 3;
 	while (gameIsRunning) {
 		ProcessInput();
@@ -144,7 +150,6 @@ int main(int argc, char* argv[]) {
 				currentLevel->Initialize(life);
 			}
 			if (Update()) {
-				life = currentLevel->__entities.player->lifeCount;
 				currentLevel = levelLst[levelN];
 				currentLevel->Initialize(life);
 			};

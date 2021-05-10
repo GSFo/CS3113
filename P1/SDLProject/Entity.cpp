@@ -1,4 +1,5 @@
 #include "Entity.h"
+#define PI 3.14159265
 //gameplay constants
 float GRAVITY = -5;
 float FRICTION = -1.5;
@@ -7,25 +8,57 @@ int sign(float a) {
 	if (a < 0) return -1;
 	return 0;
 }
-enum class UnitType{Gasty, Haunter, Player, NA};
+
+
+
+WeakenBuff::WeakenBuff(Unit* buffTaker):Buff(0, "weaken"),buffTaker(buffTaker) {
+
+}
+
+void WeakenBuff::gain(float time) {
+	buffTaker->status->buffed(.5, .1,.8);
+	Buff::gain(time);
+}
+
+void WeakenBuff::update(float time) {
+	if (timer > 0) {
+		timer -= time;
+		if (timer <= 0) {
+			buffTaker->status->buffed(2, 10, 1.25);
+			timer = 0;
+		}
+	}
+}
 
 class Player;
-void Unit::moveLeft(float time) { if (isAlive()) { v->accel(-status->getSpeed() * time, 0, 0); } }
-void Unit::moveRight(float time) { if (isAlive()) v->accel(status->getSpeed() * time, 0, 0); }
-		void Unit::moveUp(float time) { if (isAlive()) v->accel(0, status->getSpeed() * time, 0); }
-		void Unit::moveDown(float time) { if (isAlive()) v->accel(0, -status->getSpeed() * time, 0); }
+void Unit::moveLeft(float time) { if (isAlive()) { v->accel(-status->getSpeed() * time, 0, 0); size.x = 1; } }
+void Unit::moveRight(float time) { if (isAlive()) v->accel(status->getSpeed() * time, 0, 0); size.x = -1; }
+void Unit::moveUp(float time) { if (isAlive()) v->accel(0, status->getSpeed() * time, 0); }
+void Unit::moveDown(float time) { if (isAlive()) v->accel(0, -status->getSpeed() * time, 0); }
 	
-		void Unit::accelR(float r) {
-			v->accelR(r); 
-		};
-		float Unit::getDistance(Unit* other) const {
-			return std::sqrt(std::pow(location->getX() - other->location->getX(), 2) + std::pow(location->getY() - other->location->getY(), 2));
-		}
+void Unit::accelR(float r) {
+	v->accelR(r); 
+};
 
-		UnitType Unit::getType() const { return type; };
-		const glm::vec3& Unit::getV() const { return v->getV(); }
-		bool Unit::isAlive() const { return !dead; }
-		bool Unit::landed() const { return collidedBottom; }
+void Unit::applyFriction(float time) {
+	float theta = atan2(v->getV().x, v->getV().y);
+	if (pow(getV().x, 2) + pow(getV().y, 2) > pow(FRICTION * time, 2)) {
+		accel(sin(theta) * FRICTION * time, cos(theta) * FRICTION * time, 0);
+	}
+	else {
+		accel(-getV().x, -getV().y, 0);
+	}
+}
+
+float Unit::getDistance(Unit* other) const {
+	return std::sqrt(std::pow(location->getX() - other->location->getX(), 2) + std::pow(location->getY() - other->location->getY(), 2));
+}
+
+UnitType Unit::getType() const { return type; };
+const glm::vec3& Unit::getV() const { return v->getV(); }
+bool Unit::isAlive() const { return !dead; }
+bool Unit::landed() const { return collidedBottom; }
+const Status* Unit::getStatus() const { return status; };
 
 
 bool Unit::onBoarder(Map* map) {
@@ -43,18 +76,10 @@ bool Unit::onBoarder(Map* map) {
 	}
 
 	if (!boarderFlagY) {
-		if (location->getY() > map->getHeight() - abs(size.y) / 2 || location->getY() < abs(size.y) / 2 - map->getHeight()) {
-			if (Unit::type == UnitType::Player) {
-				if (location->getY() < abs(size.y) / 2 - map->getHeight()) {
-					die();
-					bounceY();
-					boarderFlagY = true;
-				}
-			}
-			else {
-				bounceY();
-				boarderFlagY = true;
-			}
+		if (location->getY() > 1 - abs(size.y) / 2 || location->getY() < -11- abs(size.y)/2) {
+			
+			bounceY();
+			boarderFlagY = true;
 		}
 	}
 	else {
@@ -66,43 +91,64 @@ bool Unit::onBoarder(Map* map) {
 }
 
 
-	Player::Player(float speed, float x, float y, float r,size_t lifeCount) :Unit(speed, x, y, r), powerShield(15, 10, "power shield") ,lifeCount(lifeCount){ 
+Player::Player(float speed, float power, float health, float x, float y, float r) :Unit(speed,power,health, x, y, r), powerShield(10, 3, "power shield") ,pistol(1),weaken(this){
 		Unit::type = UnitType::Player; 
-		failureChunk = Mix_LoadWAV("music/Assets_Audio_failure.wav");
-	};
-	void Player::update(float time, Player* player, Map* map) {
-		accel(0, GRAVITY * time, 0);
-		if (landed()) {
-			if (abs(getV().x) > abs(FRICTION * time)) {
-				accel(sign(getV().x) * FRICTION * time, 0, 0);
-			}
-			else {
-				accel(-getV().x, 0, 0);
-			}
-		}
+		failureChunk = Mix_LoadWAV("music/Dog Barking-SoundBible.com-1918920417.wav");
+		size = glm::vec3(-1, 1, 1);
+};
 
-		move(time);
+void Player::update(float time, Player* player, Map* map) {
+	//no gravity for this game; camera is upside down
+	//accel(0, GRAVITY * time, 0);
+	//player is always on land
+	//if (landed()) {
+	float d = sqrt(pow(getV().x, 2)+ pow(getV().y, 2));
+	float xp = getV().x/d;
+	float yp = getV().y/d;
+	applyFriction(time);
+	//}
 
-		powerShield.update(time);
-		if (powerShield.inEffect()) {
-			if (!boosted) { boosted = true; size.x *= 1.6; }
+	move(time);
+	weaken.update(time);
+	pistol.update(time);
+	powerShield.update(time);
+	if (powerShield.inEffect()) {
+		if (!boosted) { boosted = true;}
+	}
+	else {
+		if (boosted) { boosted = false; }
+	}
+	collidedTop = false;
+	collidedBottom = false;
+	collidedLeft = false;
+	collidedRight = false;
+	checkCollisionsX(map);
+	checkCollisionsY(map);
+};
+void Player::activateSkill() {
+	powerShield.activate();
+	weaken.update(100);
+}
+
+void Player::shoot(std::vector<Projectile*>& projLst) {
+	Projectile* bullet;
+	if (pistol.activate() != -1) {
+		if (size.x < 0) {
+			bullet = new Projectile(5, status->getPower(), 1, 3, location->getX() + 1, location->getY() + .2, 0, bulletTexture, ProjType::Friendly);
+			bullet->moveRight(1);
 		}
 		else {
-			if (boosted) { boosted = false; size.x /= 1.6; }
+			bullet = new Projectile(5, status->getPower(), 1, 3, location->getX() - 1, location->getY() + .2, 0, bulletTexture, ProjType::Friendly);
+			bullet->moveLeft(1);
 		}
-		collidedTop = false;
-		collidedBottom = false;
-		collidedLeft = false;
-		collidedRight = false;
-		checkCollisionsX(map);
-		checkCollisionsY(map);
-	};
-	void Player::activateSkill() {
-		powerShield.activate();
+		bullet->size = glm::vec3(.7, .5, .5);
+		projLst.push_back(bullet);
 	}
-	bool Player::isBoosted() const {
-		return boosted;
-	}
+}
+
+bool Player::isBoosted() const {
+	return boosted;
+}
 
 void Block::update(float time, Player* player, Map* map) { if (dead) return; processCollision(player); };
 
@@ -116,42 +162,62 @@ void Magniton::update(float time, Player* player, Map* map) {
 		}
 	}
 
-	if (onBoarder(map)) { die(); }
+	if (onBoarder(map)) { getHit(); }
 	Unit::move(time);
 	Block::update(time, player, map);
 }
-Gasty::Gasty(float x, float y, float z) :Block(BlockType::Deadly, x, y, z), voidForm(10.0, 3.0, "void form") { Unit::type = UnitType::Gasty; };
+Gengar::Gengar(float x, float y, float z) :Block(BlockType::Deadly, x, y, z), shadowSneak(10.0, 4.0, "shadow sneak"), shadowBall(3),dash(10),weaken(10){ Unit::type = UnitType::Gengar; };
 
-void Gasty::render(ShaderProgram __program2, glm::mat4 __viewMatrix, glm::mat4 __modelMatrix1, glm::mat4 __projectionMatrix1,GameStatus __states) const {
-	if (!voidForm.inEffect()) {
-		Unit::render(__program2, __viewMatrix, __modelMatrix1, __projectionMatrix1,__states);
+void Gengar::render(ShaderProgram& __program, glm::mat4& __viewMatrix, glm::mat4& __modelMatrix1, glm::mat4& __projectionMatrix1,GameStatus& __states) const {
+	if (!shadowSneak.inEffect()) {
+		Unit::render(__program, __viewMatrix, __modelMatrix1, __projectionMatrix1,__states);
 	}
+	else {
+		Utility::DrawTextGL(&__program, __states.textureIDs["font1"], "Shadow Sneak", .6f, -.3f, glm::vec3(location->getX(), location->getY(), 0));
+	}
+	Utility::DrawTextGL(&__program, __states.textureIDs["font1"], "HP: " + std::to_string((int)status->getHealth()), .6f, -.3f, glm::vec3(location->getX(), location->getY() - .5, 0));
+
+	glVertexAttribPointer(__program.positionAttribute, 2, GL_FLOAT, false, 0, __states.unitVertices);
+	glEnableVertexAttribArray(__program.positionAttribute);
+	glVertexAttribPointer(__program.texCoordAttribute, 2, GL_FLOAT, false, 0, __states.unitTexCoords);
+	glEnableVertexAttribArray(__program.texCoordAttribute);
 }
 
-void Gasty::update(float time, Player* player, Map* map) {
+void Gengar::setBossptr(Gengar*& bossptr) {
+	bossptrptr = &bossptr;
+}
+
+void Gengar::update(float time, Player* player, Map* map) {
 	if (dead) {
 		return;
 	}
-	voidForm.update(time);
-	if (getDistance(player) < 2) {
+
+	shadowBall.update(time);
+	shadowSneak.update(time);
+	dash.update(time);
+	weaken.update(time);
+	applyFriction(time);
+	move(time);
+	if (getDistance(player) < 7) {
 		if (player->isBoosted()) {
-			voidForm.activate();
+			shadowSneak.activate();
 		}
 	}
 	processCollision(player);
 
+	onBoarder(map);
 }
 
-void Gasty::processCollision(Player* other) {
-	if (!voidForm.inEffect()) {
+void Gengar::processCollision(Player* other) {
+	if (!shadowSneak.inEffect()) {
 		if (!collisionFlag) {
 			if (checkCollisionBox(other)) {
 
 				if (other->isBoosted()) {
-					die();
+					getHit();
 					return;
 				}
-				other->die();
+				other->getHit(1);
 				bounceX();
 				collisionFlag = true;
 			}
@@ -165,47 +231,43 @@ void Gasty::processCollision(Player* other) {
 
 }
 
-
-
-
-
-	Haunter::Haunter(float speed, float x, float y, float r) :Unit(speed, x, y, r) { Unit::type = UnitType::Haunter; };
-	
-
-void Haunter::processCollision(Player* other) {
-	if (!collisionFlag) {
-		if (checkCollisionBox(other)) {
-			die();
-			if (!other->isBoosted()) {
-				other->die();
-
-				return;
-			}
-			bounceX();
-			collisionFlag = true;
-		}
-	}
-	else {
-		if (!checkCollisionBox(other)) {
-			collisionFlag = false;
-		}
+void Gengar::useShadowBall(std::vector<Projectile*>& projLst, float  x, float y) {
+	//launch a shadowball to (x,y)
+	if (shadowBall.activate() != -1) {
+		Projectile* bullet = new Projectile(2, 1, 2, 18, location->getX(), location->getY(), 0, shadowBallTexture,ProjType::Hostile);
+		float theta = atan2(x - location->getX(), y - location->getY());
+		bullet->accel(sin(theta)*bullet->getStatus()->getSpeed(),cos(theta) * bullet->getStatus()->getSpeed(), 0);
+		//bullet->moveLeft(1);
+		projLst.push_back(bullet);
 	}
 }
+
+void Gengar::useDash(float x, float y) {
+	if (dash.activate() != -1) {
+		float theta = atan2(x - location->getX(), y - location->getY());
+		accel(sin(theta)*getStatus()->getSpeed(), cos(theta)*getStatus()->getSpeed(), 0);
+	}
+}
+
+void Gengar::activateWeaken(Player* target) {
+	if (weaken.activate() != -1) {
+		target->weaken.gain(4);
+	}
+}
+
+void Gengar::getHit() {
+	Unit::getHit();
+}
+
+
+
+Haunter::Haunter(float speed, float x, float y, float r) :Unit(speed, x, y, r) { Unit::type = UnitType::Haunter; };
+	
 
 void Haunter::update(float time, Player* player, Map* map) {
 	if (dead) return;
 	move(time);
 	processCollision(player);
-	//NPC->processCollision(playerB);
-	//check collision circular
-	/*not for this task
-	if (NPC->getDistance(player) < 1) {
-		player->bounceX();
-		player->bounceY();
-		player->accelR(5);
-		//__states.__GAMEOVER__();
-	}*/
-	//check boarder
 	onBoarder(map);
 }
 
@@ -221,6 +283,21 @@ Unit::Unit(float speed, float x, float y, float r) {
 	size = glm::vec3(1, 1, 1);
 	type = UnitType::NA;
 };
+
+Unit::Unit(float speed, float power,float health, float x, float y, float r) {
+	status = new Status(speed,power,health);
+	location = new Location(x, y, r);
+	v = new Velocity();
+	textureID = -1;
+	size = glm::vec3(1, 1, 1);
+	type = UnitType::NA;
+};
+
+void Unit::update(float time, std::vector<Unit*> targets, Map* map) {
+
+}
+
+void Unit::update(float time, Player* player, Map* map) {}
 
 void Unit::accel(float x, float y, float z) {
 	v->accel(x, y, z);
@@ -250,9 +327,9 @@ void Unit::processCollision(Unit* other) {
 
 	if (!collisionFlag) {
 		if (checkCollisionBox(other)) {
-			other->die();
-			die();
-			bounceX();
+			other->getHit(status->getPower());
+			getHit(other->status->getPower());
+			//bounceX();
 			collisionFlag = true;
 		}
 	}
@@ -260,6 +337,12 @@ void Unit::processCollision(Unit* other) {
 		if (!checkCollisionBox(other)) {
 			collisionFlag = false;
 		}
+	}
+}
+
+void Unit::processCollision(std::vector<Unit*> other) {
+	for (Unit* item : other) {
+		processCollision(item);
 	}
 }
 
@@ -298,13 +381,35 @@ void Unit::setMatrix(float* toSetV, float* toSetT, float* modelV, float* modelT)
 
 }
 
-void Unit::die() { dead = true; }
-void Player::die(){
-	Mix_PlayChannel(-1, failureChunk, 0);
-	lifeCount -= 1;
-	if (lifeCount == 0) {
-		dead = true;
+void Unit::getHit() { dead = true; }
+void Unit::getHit(float dmg) {
+	if (status->loseLife(dmg)) {
+		Unit::getHit();
 	}
+}
+void Player::getHit(float dmg){
+	if (!powerShield.inEffect()) {
+		Mix_PlayChannel(-1, failureChunk, 0);
+		Unit::getHit(dmg);
+	}
+}
+
+void Player::render(ShaderProgram& __program, glm::mat4& __viewMatrix, glm::mat4& __modelMatrix1, glm::mat4& __projectionMatrix1, GameStatus& __states) const{
+	Unit::render(__program, __viewMatrix, __modelMatrix1, __projectionMatrix1, __states);
+	Utility::DrawTextGL(&__program, __states.textureIDs["font1"], "HP: "+std::to_string((int)status->getHealth()), .6f, -.3f, glm::vec3(location->getX()-.5, location->getY()-1, 0));
+	if (weaken.inEffect()) {
+		Utility::DrawTextGL(&__program, __states.textureIDs["font1"], "Weaken", .6f, -.3f, glm::vec3(location->getX()-.5, location->getY() +1, 0));
+
+	}
+	if (powerShield.inEffect()) {
+		Utility::DrawTextGL(&__program, __states.textureIDs["font1"], "Shield Up", .6f, -.3f, glm::vec3(location->getX() - .5, location->getY() + 1, 0));
+
+	}
+	glVertexAttribPointer(__program.positionAttribute, 2, GL_FLOAT, false, 0, __states.unitVertices);
+	glEnableVertexAttribArray(__program.positionAttribute);
+	glVertexAttribPointer(__program.texCoordAttribute, 2, GL_FLOAT, false, 0, __states.unitTexCoords);
+	glEnableVertexAttribArray(__program.texCoordAttribute);
+
 }
 
 void Unit::land() {
@@ -318,7 +423,7 @@ void Unit::jump() {
 	}
 }
 
-void Unit::render(ShaderProgram __program2, glm::mat4 __viewMatrix, glm::mat4 __modelMatrix1, glm::mat4 __projectionMatrix1,GameStatus __states) const {
+void Unit::render(ShaderProgram& __program2, glm::mat4& __viewMatrix, glm::mat4& __modelMatrix1, glm::mat4& __projectionMatrix1,GameStatus &__states) const {
 	/*
 	std::stringstream os;
 	os << "TID: "<<textureID<<"\nx: "<< std::fixed<<std::setprecision(2)<<location->getX()<<"\ny: "<<location->getY();
@@ -339,7 +444,7 @@ void Unit::render(ShaderProgram __program2, glm::mat4 __viewMatrix, glm::mat4 __
 	__modelMatrix1 = glm::rotate(__modelMatrix1, glm::radians(location->getR()), glm::vec3(0.0f, 0.0f, 1));
 	//__modelMatrix = glm::scale(__modelMatrix, size);
 	__program2.SetModelMatrix(__modelMatrix1);
-
+	
 	if (repeat) {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	}
@@ -349,7 +454,7 @@ void Unit::render(ShaderProgram __program2, glm::mat4 __viewMatrix, glm::mat4 __
 
 
 
-void Unit::setTexture(const char* name, GameStatus __states, bool repeat) {
+void Unit::setTexture(const char* name, GameStatus& __states, bool repeat) {
 	this->textureID = __states.textureIDs[name];
 	this->repeat = repeat;
 	/*
@@ -362,7 +467,7 @@ void Unit::setTexture(const char* name, GameStatus __states, bool repeat) {
 
 
 
-Block::Block(BlockType type, float x, float y, float r) :Unit(0.0, x, y, r) {
+Block::Block(BlockType type, float x, float y, float r) :Unit(3,5,50, x, y, r) {
 	this->type = type;
 
 }
@@ -467,4 +572,44 @@ void Unit::checkCollisionsX(Map* map)
 		v->accel(-v->getV().x, 0, 0);
 		collidedRight = true;
 	}
+}
+
+
+
+Projectile::Projectile(float speed, float power, float health, float duration, float x, float y, float r, GLuint texture,ProjType type)
+	:Unit(speed, power, health, x, y, r), duration(duration, "d") ,type(type){
+	this->textureID = texture;
+}
+
+void Projectile::update(float time, std::vector<Unit*> targets, Map* map) {
+	duration.update(time);
+	if (!duration.inEffect()) {
+		getHit();
+	}
+	if (dead) return;
+	move(time);
+	processCollision(targets);
+	//NPC->processCollision(playerB);
+	//check collision circular
+	/*not for this task
+	if (NPC->getDistance(player) < 1) {
+		player->bounceX();
+		player->bounceY();
+		player->accelR(5);
+		//__states.__GAMEOVER__();
+	}*/
+	//check boarder
+	onBoarder(map);
+}
+
+
+void Projectile::setAttribute(float speed, float power, float health, float duration, float x, float y, float r, GLuint texture) {
+	location->setLocation(x, y, r);
+	status->setStatus(speed, power, health);
+	this->duration.gain(duration);
+	this->textureID = texture;
+}
+
+ProjType Projectile::getType() const{
+	return type;
 }

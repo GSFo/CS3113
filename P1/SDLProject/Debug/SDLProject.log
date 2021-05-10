@@ -1,12 +1,10 @@
-﻿  Level2.cpp
+﻿  Entity.cpp
 E:\C++ project\CS3113\CS3113\P1\SDLProject\GameStates.h(17): warning C4091: 'static ': ignored on left of 'GameStatus::GameState' when no variable is declared
-E:\C++ project\CS3113\CS3113\P1\SDLProject\Level2.cpp(158,38): warning C4244: 'argument': conversion from 'GLuint' to 'float', possible loss of data
-E:\C++ project\CS3113\CS3113\P1\SDLProject\Level2.cpp(160,23): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-E:\C++ project\CS3113\CS3113\P1\SDLProject\Level2.cpp(160,17): warning C4244: 'argument': conversion from 'GLuint' to 'float', possible loss of data
-  Level3.cpp
-E:\C++ project\CS3113\CS3113\P1\SDLProject\GameStates.h(17): warning C4091: 'static ': ignored on left of 'GameStatus::GameState' when no variable is declared
-E:\C++ project\CS3113\CS3113\P1\SDLProject\Level3.cpp(158,38): warning C4244: 'argument': conversion from 'GLuint' to 'float', possible loss of data
-E:\C++ project\CS3113\CS3113\P1\SDLProject\Level3.cpp(160,23): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-E:\C++ project\CS3113\CS3113\P1\SDLProject\Level3.cpp(160,17): warning C4244: 'argument': conversion from 'GLuint' to 'float', possible loss of data
-  Generating Code...
+E:\C++ project\CS3113\CS3113\P1\SDLProject\Entity.cpp(19,37): warning C4305: 'argument': truncation from 'double' to 'float'
+E:\C++ project\CS3113\CS3113\P1\SDLProject\Entity.cpp(137,96): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+E:\C++ project\CS3113\CS3113\P1\SDLProject\Entity.cpp(141,96): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+E:\C++ project\CS3113\CS3113\P1\SDLProject\Entity.cpp(161,50): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+E:\C++ project\CS3113\CS3113\P1\SDLProject\Entity.cpp(161,27): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+E:\C++ project\CS3113\CS3113\P1\SDLProject\Entity.cpp(58): warning C4172: returning address of local variable or temporary
+E:\C++ project\CS3113\CS3113\P1\SDLProject\Buff.h(39): warning C4715: 'Skill::activate': not all control paths return a value
   SDLProject.vcxproj -> E:\C++ project\CS3113\CS3113\P1\SDLProject\Debug\SDLProject.exe

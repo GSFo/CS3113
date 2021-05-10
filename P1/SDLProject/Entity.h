@@ -1,3 +1,4 @@
+
 #pragma once
 
 #ifdef _WINDOWS
@@ -11,25 +12,31 @@
 #include "ShaderProgram.h"
 #include "GameStates.h"
 #include <SDL_mixer.h>
+#include <math.h>
 
+
+class Projectile;
 class Player;
-enum class UnitType;
-
+enum class UnitType { Gengar, Haunter, Player, Projectile, NA };
+class WeakenBuff;
 class Unit {
+
+	friend WeakenBuff;
 private:
-	Status* status;
-	GLuint textureID;
-	Velocity* v;
 	bool repeat;
 	bool boarderFlagX;
 	bool boarderFlagY;
 	bool onland;
 
+	Velocity* v;
 
 
 
 
 protected:
+	void applyFriction(float time);
+	Status* status;
+	GLuint textureID;
 	bool collisionFlag;
 	bool collidedTop;
 	bool collidedBottom;
@@ -40,12 +47,17 @@ protected:
 
 
 public:
+
 	Location* location;
 	glm::vec3 size;//probably gonna make a class for this later
 	//Unit() {};
 	Unit(float speed, float x, float y, float r);
-	virtual void update(float time, Player* player, Map* map)=0;
-	void setTexture(const char*, GameStatus __states, bool repeat = false);
+	Unit(float speed, float power, float health, float x, float y, float z);
+	virtual void update(float time, Player* player, Map* map);
+	virtual void update(float time, std::vector<Unit*> targets, Map* map);
+
+	virtual void render(ShaderProgram& __program2, glm::mat4& __viewMatrix, glm::mat4& __modelMatrix1, glm::mat4& __projectionMatrix1, GameStatus& __states) const;
+	void setTexture(const char*, GameStatus& __states, bool repeat = false);
 	void moveLeft(float time);
 	void moveRight(float time);
 	void moveUp(float time);
@@ -57,37 +69,55 @@ public:
 	void bounceX();
 	void bounceY();
 	void move(float time);//move with velocity
-	virtual void render(ShaderProgram __program2, glm::mat4 __viewMatrix, glm::mat4 __modelMatrix1, glm::mat4 __projectionMatrix1,GameStatus __states) const;
 	bool checkCollisionBox(Unit* other);
 	void checkCollisionsX(Map* map);
 	void checkCollisionsY(Map* map);
 	virtual void processCollision(Unit* other);
+	virtual void processCollision(std::vector<Unit*> targets);
 	float getDistance(Unit* other) const;
 	bool onBoarder(Map* map);
 	void setMatrix(float* m, float*, float*, float* model) const;
-	virtual void die();
+	virtual void getHit();
+	virtual void getHit(float damage);
 	UnitType getType() const;
 	const glm::vec3& getV() const;
 	bool isAlive() const;
 	bool landed() const;
+	const Status* getStatus() const;
 };
 
 enum class BlockType { Deadly, Bouncy, Platform };
 
 
+class WeakenBuff :public Buff {
+private:
+	Unit* buffTaker;
+public:
+	WeakenBuff(Unit* buffTaker);
+	void gain(float duration) override;
+	void update(float time) override;
+};
+
+
 class Player :public Unit {
 private:
 	BuffSkill powerShield;
+	Skill pistol;
+	//ShootSkillP gunshot;
 	bool boosted = false;
 	
 public:
-	size_t lifeCount;
-	Player(float speed, float x, float y, float r, size_t lifeCount);
+	WeakenBuff weaken;
+
+	GLuint bulletTexture;
+	Player(float speed, float health, float power, float x, float y, float r);
 	void update(float time, Player* player, Map* map);
+	void shoot(std::vector<Projectile*>& projLst);
 	void activateSkill();
 	bool isBoosted() const;
-	void die() override;
+	void getHit(float dmg) override;
 	Mix_Chunk* failureChunk;
+	virtual void render(ShaderProgram& __program2, glm::mat4& __viewMatrix, glm::mat4& __modelMatrix1, glm::mat4& __projectionMatrix1, GameStatus& __states) const;
 };
 
 class Block :public Unit {
@@ -108,23 +138,46 @@ public:
 	void update(float time,Player* player, Map* map);
 };
 
-class Gasty :public Block {
+class Gengar :public Block {
 private:
-	BuffSkill voidForm;
+	BuffSkill shadowSneak;
+	Skill shadowBall;
+	Skill dash;
+	Gengar** bossptrptr;
+	Skill weaken;
 public:
+	void setBossptr(Gengar*& bossptr);
+	GLuint shadowBallTexture;
 	void update(float time,Player* player,Map* map);
-	Gasty(float x, float y, float z);
+	Gengar(float x, float y, float z);
 	void processCollision(Player* other);
-	void render(ShaderProgram __program2, glm::mat4 __viewMatrix, glm::mat4 __modelMatrix1, glm::mat4 __projectionMatrix1,GameStatus) const;
-
+	void render(ShaderProgram& __program2, glm::mat4& __viewMatrix, glm::mat4& __modelMatrix1, glm::mat4& __projectionMatrix1,GameStatus&) const override;
+	void useShadowBall(std::vector<Projectile*>& projLst, float x, float y);
+	void useDash(float x, float y);
+	void activateWeaken(Player* player);
+	void getHit() override;
+	
 };
+
 
 class Haunter :public Unit {
 public:
 	Haunter(float speed, float x, float y, float r);
 	void update(float time,Player* player, Map* map);
-	void processCollision(Player* other);
 };
 
 
 
+enum class ProjType { Friendly, Hostile };
+
+class Projectile : public Unit {
+private:
+	Buff duration;
+	std::vector<Unit*>* target;
+	ProjType type;
+public:
+	Projectile(float speed, float power, float health, float duration, float x, float y, float r, GLuint texture,ProjType type);//speed: movement speed, power: hit power, health: num of penetration
+	void update(float time, std::vector<Unit*> targets, Map* map);
+	void setAttribute(float speed, float power, float health, float duration, float x, float y, float r, GLuint texture);
+	ProjType getType() const;
+};

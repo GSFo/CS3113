@@ -1,3 +1,4 @@
+
 #pragma once
 #define GL_SILENCE_DEPRECATION
 #ifdef _WINDOWS
@@ -25,4 +26,6 @@ public:
 	virtual void spawnNPC(GLuint num)=0;
 	virtual void updateNPC(float time)=0;
 	virtual void renderNPC()=0;
+	virtual void playerShoot() = 0;
+	virtual Gengar* spawnBoss() = 0;
 };
